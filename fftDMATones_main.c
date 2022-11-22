@@ -99,6 +99,10 @@ __interrupt void DMA_ISR(void);
 void InitDma(void);
 //!!!!!!!!!!!!!!!!!!!!!!  End of Block
 
+// Li's Global Varible
+int16_t SMPI = 0;
+uint16_t test = 0;
+
 // Interrupt Service Routines predefinition
 __interrupt void cpu_timer0_isr(void);
 __interrupt void cpu_timer1_isr(void);
@@ -122,7 +126,7 @@ void main(void)
     InitSysCtrl();
 
     InitGpio();
-    
+
     // Blue LED on LuanchPad
     GPIO_SetupPinMux(31, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_PUSHPULL);
@@ -137,7 +141,7 @@ void main(void)
     GPIO_SetupPinMux(22, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(22, GPIO_OUTPUT, GPIO_PUSHPULL);
     GpioDataRegs.GPACLEAR.bit.GPIO22 = 1;
-    
+
     // LED2
     GPIO_SetupPinMux(94, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(94, GPIO_OUTPUT, GPIO_PUSHPULL);
@@ -162,7 +166,7 @@ void main(void)
     GPIO_SetupPinMux(66, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(66, GPIO_OUTPUT, GPIO_PUSHPULL);
     GpioDataRegs.GPCSET.bit.GPIO66 = 1;
-    
+
     //WIZNET  CS  Chip Select
     GPIO_SetupPinMux(125, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(125, GPIO_OUTPUT, GPIO_PUSHPULL);
@@ -207,9 +211,9 @@ void main(void)
     PieVectTable.SCIA_TX_INT = &TXAINT_data_sent;
     PieVectTable.SCIC_TX_INT = &TXCINT_data_sent;
     PieVectTable.SCID_TX_INT = &TXDINT_data_sent;
-//!!!!!!!!!!!!!!!!!!!!!!  Copy the Assignmnt of the DMA interrupt service routine
+    //!!!!!!!!!!!!!!!!!!!!!!  Copy the Assignmnt of the DMA interrupt service routine
     PieVectTable.DMA_CH1_INT = &DMA_ISR;
-//!!!!!!!!!!!!!!!!!!!!!!  End of Block
+    //!!!!!!!!!!!!!!!!!!!!!!  End of Block
     PieVectTable.EMIF_ERROR_INT = &SWI_isr;
     EDIS;    // This is needed to disable write to EALLOW protected registers
 
@@ -233,7 +237,7 @@ void main(void)
     //    init_serial(&SerialC,115200,serialRXC);
     //    init_serial(&SerialD,115200,serialRXD);
 
-//!!!!!!!!!!!!!!!!!!!!!! DMAFFT Copy this block of code after your init_serial functions
+    //!!!!!!!!!!!!!!!!!!!!!! DMAFFT Copy this block of code after your init_serial functions
     EALLOW;
     EPwm7Regs.ETSEL.bit.SOCAEN = 0; // Disable SOC on A group
     EPwm7Regs.TBCTL.bit.CTRMODE = 3; // freeze counter
@@ -297,7 +301,7 @@ void main(void)
     // Enable SWI in the PIE: Group 12 interrupt 9
     PieCtrlRegs.PIEIER12.bit.INTx9 = 1;
 
-//!!!!!!!!!!!!!!!!!!!!!!  Copy this block of code right before your EINT; line of code
+    //!!!!!!!!!!!!!!!!!!!!!!  Copy this block of code right before your EINT; line of code
     int16_t i = 0;
     float samplePeriod = 0.0001;
 
@@ -314,29 +318,29 @@ void main(void)
     hnd_rfft->InBuf     = &fft_input[0];  //Input buffer
     hnd_rfft->OutBuf    = &test_output[0];  //Output buffer
     hnd_rfft->MagBuf    = &pwrSpec[0];  //Magnitude buffer
-    
+
     hnd_rfft->CosSinBuf = &RFFTF32Coef[0];  //Twiddle factor buffer
     RFFT_f32_sincostable(hnd_rfft);         //Calculate twiddle factor
 
     for (i=0; i < RFFT_SIZE; i++){
-          test_output[i] = 0;               //Clean up output buffer
+        test_output[i] = 0;               //Clean up output buffer
     }
 
     for (i=0; i <= RFFT_SIZE/2; i++){
-         pwrSpec[i] = 0;                //Clean up magnitude buffer
+        pwrSpec[i] = 0;                //Clean up magnitude buffer
     }
 
 
     int16_t tries = 0;
     while(tries < 10*0) {  // Get ride of the 0 in 10*0 if you want to run this while loop and test out the FFT function with these sin waves
         RFFT_f32(hnd_rfft);                     //Calculate real FFT
-        
-    #ifdef __TMS320C28XX_TMU__ //defined when --tmu_support=tmu0 in the project
-            // properties
-            RFFT_f32_mag_TMU0(hnd_rfft);            //Calculate magnitude
-    #else
-            RFFT_f32_mag(hnd_rfft);                 //Calculate magnitude
-    #endif
+
+#ifdef __TMS320C28XX_TMU__ //defined when --tmu_support=tmu0 in the project
+        // properties
+        RFFT_f32_mag_TMU0(hnd_rfft);            //Calculate magnitude
+#else
+        RFFT_f32_mag(hnd_rfft);                 //Calculate magnitude
+#endif
         maxpwr = 0;
         maxpwrindex = 0;
 
@@ -352,7 +356,7 @@ void main(void)
             fft_input[i] = sin((125 + tries*125)*2*PI*i*samplePeriod)+2*sin((2400-tries*200)*2*PI*i*samplePeriod);
         }
     }
-//!!!!!!!!!!!!!!!!!!!!!!  End of Block
+    //!!!!!!!!!!!!!!!!!!!!!!  End of Block
 
     // Enable global Interrupts and higher priority real-time debug events
     EINT;  // Enable Global interrupt INTM
@@ -362,10 +366,11 @@ void main(void)
     while(1)
     {
         if (UARTPrint == 1 ) {
-            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f \r\n", maxpwr, maxpwrindex*10000.0/1024.0);
+            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f T: %d\r\n", maxpwr, maxpwrindex*10000.0/1024.0,test);
             UARTPrint = 0;
+            test = 0;
         }
-//!!!!!!!!!!!!!!!!!!!!!!  Copy this block of code after your UARTPrint == 1 while loop as above
+        //!!!!!!!!!!!!!!!!!!!!!!  Copy this block of code after your UARTPrint == 1 while loop as above
         if ( (pingFFT == 1) || (pongFFT == 1) ) {
             if (pingFFT == 1) {
                 pingFFT = 0;
@@ -381,17 +386,17 @@ void main(void)
                     //--- Read the ADC result:
                     fft_input[i] = AdcPongBufRaw[i]*3.0/4095.0;  // pong data
                 }
-//                hnd_rfft->InBuf     = &fft_input[0];  //Input buffer
+                //                hnd_rfft->InBuf     = &fft_input[0];  //Input buffer
             }
-            
+
             RFFT_f32(hnd_rfft);
 
-            #ifdef __TMS320C28XX_TMU__ //defined when --tmu_support=tmu0 in the project
-                        // properties
-                    RFFT_f32_mag_TMU0(hnd_rfft);            //Calculate magnitude
-            #else
-                    RFFT_f32_mag(hnd_rfft);                 //Calculate magnitude
-            #endif
+#ifdef __TMS320C28XX_TMU__ //defined when --tmu_support=tmu0 in the project
+            // properties
+            RFFT_f32_mag_TMU0(hnd_rfft);            //Calculate magnitude
+#else
+            RFFT_f32_mag(hnd_rfft);                 //Calculate magnitude
+#endif
 
             maxpwr = 0;
             maxpwrindex = 0;
@@ -400,12 +405,16 @@ void main(void)
                 if (pwrSpec[i]>maxpwr) {
                     maxpwr = pwrSpec[i];
                     maxpwrindex = i;
+                    SMPI = maxpwrindex*10000.0/1024.0;
                 }
             }
-
+            if (SMPI >= 3000.0){
+                test = 1;
+            }
             UARTPrint = 1;
+
         }
-//!!!!!!!!!!!!!!!!!!!!!!  End of Block
+        //!!!!!!!!!!!!!!!!!!!!!!  End of Block
 
     }
 }
@@ -419,9 +428,9 @@ __interrupt void SWI_isr(void) {
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP12;
     asm("       NOP");                    // Wait one cycle
     EINT;                                 // Clear INTM to enable interrupts
-    
+
     // Insert SWI ISR Code here.......
-    
+
     numSWIcalls++;
 
     DINT;
@@ -449,21 +458,22 @@ __interrupt void cpu_timer0_isr(void)
 // cpu_timer1_isr - CPU Timer1 ISR
 __interrupt void cpu_timer1_isr(void)
 {
-    
+
     CpuTimer1.InterruptCount++;
+
 }
 
 // cpu_timer2_isr CPU Timer2 ISR
 __interrupt void cpu_timer2_isr(void)
 {
-    
+
     // Blink LaunchPad Blue LED
     GpioDataRegs.GPATOGGLE.bit.GPIO31 = 1;
     // Blink a number of LEDS
     CpuTimer2.InterruptCount++;
-//  if ((CpuTimer2.InterruptCount % 50) == 0) {
-//      UARTPrint = 1;
-//  }
+    //  if ((CpuTimer2.InterruptCount % 50) == 0) {
+    //      UARTPrint = 1;
+    //  }
 }
 
 
