@@ -99,9 +99,66 @@ __interrupt void DMA_ISR(void);
 void InitDma(void);
 //!!!!!!!!!!!!!!!!!!!!!!  End of Block
 
-// Li's Global Varible
-int16_t SMPI = 0;
-uint16_t test = 0;
+// Global Varible
+float Gpw = 0; // Store the Power of the sound
+float Gfre = 0; // Store the frequency of the sound
+uint32_t SN = 0; // State number use for case
+uint32_t SRSN = 0; // Robot state number
+float FwdCount = 0;
+float RightTurnCount = 0;
+float tv = 0;
+float PSMC1C = 0;
+float PSMC2C = 0;
+float C3S = 0;
+float PSMC3C = 0;
+float PSMC4C = 0;
+float tv2 = 0;
+
+// Copy from Lab 6
+float LW = 0; // Predefine value use for lab 6 exercise 1
+float RW = 0; // Predefine value use for lab 6 exercise 1
+float LWF = 0; // Predefine value use for lab 6 exercise 1
+float RWF = 0; // Predefine value use for lab 6 exercise 1
+float uLeft = 5.0; // Predefine value use for lab 6 exercise 1
+float uRight = 5.0; // Predefine value use for lab 6 exercise 1
+float PLK = 0; // Predefine value use for lab 6 exercise 2
+float PLK_1 = 0; // Predefine value use for lab 6 exercise 2
+float VLK = 0; // Predefine value use for lab 6 exercise 2
+float PRK = 0; // Predefine value use for lab 6 exercise 2
+float PRK_1 = 0; // Predefine value use for lab 6 exercise 2
+float VRK = 0; // Predefine value use for lab 6 exercise 2
+float eKL = 0; // Predefine value use for lab 6 exercise 3
+float eKR = 0; // Predefine value use for lab 6 exercise 3
+float Vref = 0; // Predefine value use for lab 6 exercise 3
+float vK = 0; // Predefine value use for lab 6 exercise 3
+float IKL = 0; // Predefine value use for lab 6 exercise 3
+float IKL1 = 0; // Predefine value use for lab 6 exercise 3
+float eKL1 = 0; // Predefine value use for lab 6 exercise 3
+float eKR1 = 0; // Predefine value use for lab 6 exercise 3
+float IKR = 0; // Predefine value use for lab 6 exercise 3
+float IKR1 = 0; // Predefine value use for lab 6 exercise
+float uKL = 0; // Predefine value use for lab 6 exercise 3
+float uKR = 0; // Predefine value use for lab 6 exercise 3
+float Kp = 3; // Predefine value use for lab 6 exercise 3
+float Ki = 25.0; // Predefine value use for lab 6 exercise 3
+float KpT = 3; // Predefine value use for lab 6 exercise 4
+float eT = 0; // Predefine value use for lab 6 exercise 4
+float turn = 0;
+// Copy from Lab 6 end
+
+// Global function
+void FPP(void); // Program state machine function
+int freIndex(float fre); // Frequency input to index converter
+void SRBSM(void);// Square Robot state machine
+
+// Copy from Lab 6
+void setupSpib(void);
+void init_eQEPs(void);
+float readEncLeft(void);
+float readEncRight(void);
+void setEPWM2A(float controleffort);
+void setEPWM2B(float controleffort);
+// Copy from Lab 6 end
 
 // Interrupt Service Routines predefinition
 __interrupt void cpu_timer0_isr(void);
@@ -224,9 +281,9 @@ void main(void)
 
     // Configure CPU-Timer 0, 1, and 2 to interrupt every second:
     // 200MHz CPU Freq, 1 second Period (in uSeconds)
-    ConfigCpuTimer(&CpuTimer0, 200, 10000);
-    ConfigCpuTimer(&CpuTimer1, 200, 20000);
-    ConfigCpuTimer(&CpuTimer2, 200, 40000);
+    ConfigCpuTimer(&CpuTimer0, 200, 2000000); // 1000 = 1ms, 1s
+    ConfigCpuTimer(&CpuTimer1, 200, 2000000); // 1s
+    ConfigCpuTimer(&CpuTimer2, 200, 1000);
 
     // Enable CpuTimer Interrupt bit TIE
     CpuTimer0Regs.TCR.all = 0x4000;
@@ -236,6 +293,25 @@ void main(void)
     init_serial(&SerialA,115200,serialRXA);
     //    init_serial(&SerialC,115200,serialRXC);
     //    init_serial(&SerialD,115200,serialRXD);
+
+    // Copy from Lab 6
+    EPwm2Regs.TBCTL.bit.CTRMODE = 0; // Set TBCTL in Up count mode.
+    EPwm2Regs.TBCTL.bit.FREE_SOFT = 3; // Let the PWM go free run when I set a breakpoint.
+    EPwm2Regs.TBCTL.bit.PHSEN = 0; // disable the phase loading.
+    EPwm2Regs.TBCTL.bit.CLKDIV = 0; // Clock divide by 1.
+    EPwm2Regs.TBCTR = 0; // Start the timer at zero.
+    EPwm2Regs.TBPRD = 2500; // Set period to 20kHz, 9C4 = 2500.
+    EPwm2Regs.CMPA.bit.CMPA = 0; // Start duty cycle 0%.
+    EPwm2Regs.CMPB.bit.CMPB = 0; // Start duty cycle 0%.
+    EPwm2Regs.AQCTLA.bit.CAU = 1; // Set TBCTR to clear when reach CMPA value. EPWM2A
+    EPwm2Regs.AQCTLA.bit.ZRO = 2; // Set TBCTR to set when TBCTR is zero. EPWM2A
+    EPwm2Regs.AQCTLB.bit.CBU = 1; // Set TBCTR for to clear when reach CMPA value. EPWM2B
+    EPwm2Regs.AQCTLB.bit.ZRO = 2; // Set TBCTR to set when TBCTR is zero.EPWM2B
+    EPwm2Regs.TBPHS.bit.TBPHS = 0; // Set phase to zero.
+
+    GPIO_SetupPinMux(2, GPIO_MUX_CPU1, 1); // Set GPIO2 to be the output pin for EPWM2A
+    GPIO_SetupPinMux(3, GPIO_MUX_CPU1, 1); // Set GPIO3 to be the output pin for EPWM2B
+    // Copy from Lab 6 end
 
     //!!!!!!!!!!!!!!!!!!!!!! DMAFFT Copy this block of code after your init_serial functions
     EALLOW;
@@ -286,6 +362,11 @@ void main(void)
     InitDma();
     //!!!!!!!!!!!!!!!!!!!!!!  End of Block
 
+    // Copy from Lab 6
+    setupSpib();
+    init_eQEPs();
+    // Copy from Lab 6 end
+
     // Enable CPU int1 which is connected to CPU-Timer 0, CPU int13
     // which is connected to CPU-Timer 1, and CPU int 14, which is connected
     // to CPU-Timer 2:  int 12 is for the SWI.  
@@ -300,6 +381,11 @@ void main(void)
     PieCtrlRegs.PIEIER1.bit.INTx7 = 1;
     // Enable SWI in the PIE: Group 12 interrupt 9
     PieCtrlRegs.PIEIER12.bit.INTx9 = 1;
+
+    // Copy from Lab 6
+    // Enable SPIB_RX in the PIE: Group 6 interrupt 3
+    PieCtrlRegs.PIEIER6.bit.INTx3 = 1;
+    // Copy from Lab 6 end
 
     //!!!!!!!!!!!!!!!!!!!!!!  Copy this block of code right before your EINT; line of code
     int16_t i = 0;
@@ -362,14 +448,22 @@ void main(void)
     EINT;  // Enable Global interrupt INTM
     ERTM;  // Enable Global realtime interrupt DBGM
 
+
     // IDLE loop. Just sit and loop forever (optional):
     while(1)
     {
         if (UARTPrint == 1 ) {
-            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f T: %d\r\n", maxpwr, maxpwrindex*10000.0/1024.0,test);
+            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f SN: %ld TV: %.0f TV2: %.0f \r\n", maxpwr, maxpwrindex*10000.0/1024.0,SN,tv,tv2);
+            Gpw = maxpwr;
+            Gfre = maxpwrindex*10000.0/1024.0;
+
             UARTPrint = 0;
-            test = 0;
         }
+
+        //********** Detect Frequency **********//
+
+        //********** End Detect **********//
+
         //!!!!!!!!!!!!!!!!!!!!!!  Copy this block of code after your UARTPrint == 1 while loop as above
         if ( (pingFFT == 1) || (pongFFT == 1) ) {
             if (pingFFT == 1) {
@@ -405,18 +499,16 @@ void main(void)
                 if (pwrSpec[i]>maxpwr) {
                     maxpwr = pwrSpec[i];
                     maxpwrindex = i;
-                    SMPI = maxpwrindex*10000.0/1024.0;
                 }
             }
-            if (SMPI >= 3000.0){
-                test = 1;
-            }
+
             UARTPrint = 1;
 
         }
         //!!!!!!!!!!!!!!!!!!!!!!  End of Block
 
     }
+
 }
 
 
@@ -442,6 +534,8 @@ __interrupt void cpu_timer0_isr(void)
 {
     CpuTimer0.InterruptCount++;
 
+    SN = (SN * 10 + freIndex(Gfre)) % 100000;
+
     numTimer0calls++;
 
     // if ((numTimer0calls%50) == 0) {
@@ -460,13 +554,15 @@ __interrupt void cpu_timer1_isr(void)
 {
 
     CpuTimer1.InterruptCount++;
+    if (SN != 82112|| SN != 81128 || SN != 84211 || SN != 81388){
+        FPP();
+    }
 
 }
 
 // cpu_timer2_isr CPU Timer2 ISR
 __interrupt void cpu_timer2_isr(void)
 {
-
     // Blink LaunchPad Blue LED
     GpioDataRegs.GPATOGGLE.bit.GPIO31 = 1;
     // Blink a number of LEDS
@@ -474,6 +570,66 @@ __interrupt void cpu_timer2_isr(void)
     //  if ((CpuTimer2.InterruptCount % 50) == 0) {
     //      UARTPrint = 1;
     //  }
+
+    // Copy from Lab 6
+    LW = readEncLeft(); // in radiant
+    RW = readEncRight(); // in radiant
+    PLK = LW/4.95;
+    VLK = (PLK - PLK_1)/0.004;
+    PLK_1 = PLK;
+    PRK = RW/4.95;
+    VRK = (PRK - PRK_1)/0.004;
+    PRK_1 = PRK;
+    eT = turn +(VLK - VRK);
+    eKL = Vref - VLK - KpT * eT;
+    eKR = Vref - VRK + KpT * eT;
+    IKL = IKL1 + 0.004 * (eKL+eKL1)/2;
+    uKL = Kp * eKL + Ki * IKL;
+    IKR = IKR1 + 0.004 * (eKR+eKR1)/2;
+    uKR = Kp * eKR + Ki * IKR;
+    eKL1 = eKL;
+    eKR1 = eKR;
+    if(uKL >= 10){
+        uKL = 10;
+    }
+    else if(uKL <= -10){
+        uKL = -10;
+    }
+    else{
+        IKL1 = IKL;
+    }
+    if(uKR >= 10){
+        uKR = 10;
+    }
+    else if(uKR <= -10){
+        uKR = -10;
+    }
+    else{
+        IKR1 = IKR;
+    }
+    setEPWM2A(uKR);
+    setEPWM2B(-uKL);
+    // Copy from Lab 6 end
+
+    // Program state Machine Counter
+    PSMC1C++; // Program state machine case 1 counter
+
+    PSMC2C++; // Program state machine case 2 counter
+    if (C3S == 1 && PSMC3C < 14000){
+    PSMC3C++;
+    SRBSM();
+    }
+    else if (PSMC3C > 14000){
+        turn = 0;
+        Vref = 0;
+        PSMC3C = 0;
+        C3S = 0;
+        uKR = 0;
+        uKL = 0;
+    }
+
+
+    PSMC4C++; // Program state machine case 4 counter
 }
 
 
@@ -596,3 +752,451 @@ void InitDma(void)
 
 } // end InitDma()
 //!!!!!!!!!!!!!!!!!!!!!!  End of Block
+void FPP(void){ // Lab 4 is the microphone
+
+    switch(SN){
+
+    case 81128: // Merge with Lab 6 soundtrack4 74256
+        tv = 4;
+        break;
+
+    case 84211: // Circle movement soundtrack1 76543
+        tv = 1;
+        break;
+
+    case 81388: // Square Movement soundtrack3 73246
+        if (C3S == 0 && PSMC3C < 14000){
+        SRSN = 0;
+        C3S = 1;
+        tv = 2;
+        }
+    break;
+
+    case 82132: // Wheelie ST2
+        tv = 3;
+        break;
+
+    default:// Wall following
+        tv = 5;
+
+        break;
+
+}
+}
+
+void SRBSM(void){
+
+    switch(SRSN){
+
+    case 0: // Forward
+        turn = 0;
+        FwdCount = 0;
+        SRSN = 2;
+        tv2 = 1;
+        break;
+
+    case 1: // Turn Right
+        Vref = 0;
+        RightTurnCount = 0;
+        SRSN = 3;
+        tv2 = 2;
+        break;
+
+    case 2: // Forward Counter
+        FwdCount++;
+        // Fwd command
+        Vref = 0.15;
+        // Fwd command end
+        if (FwdCount > 3000){
+            SRSN = 1;
+        }
+        else{
+            SRSN = 2;
+        }
+        break;
+
+    case 3: //Right Turn Counter
+        RightTurnCount++;
+        // Right Turn Command
+        turn = 0.5;
+        // Right Turn Command end
+        if (RightTurnCount > 500){
+            SRSN = 0;
+        }
+        else{
+            SRSN = 3;
+        }
+        break;
+    }
+}
+// Frequency to State Number Converter
+int freIndex(float fre){
+
+    int SNR = 0;
+
+    if (fre < 1000){
+        SNR = 1;
+    }
+
+    else if (fre > 1000 && fre < 1500){
+        SNR = 2;
+    }
+
+    else if (fre > 1500 && fre < 2000){
+        SNR = 3;
+    }
+
+    else if (fre > 2000 && fre < 2500){
+        SNR = 4;
+    }
+
+    else if (fre > 2500 && fre < 3000){
+        SNR = 5;
+    }
+
+    else if (fre > 3000 && fre < 3500){
+        SNR = 6;
+    }
+
+    else if (fre > 3500 && fre < 4000){
+        SNR = 7;
+    }
+
+    else if (fre > 4000 && fre < 4500){
+        SNR = 8;
+    }
+
+    else if (fre > 4500){
+        SNR = 9;
+    }
+
+    return SNR;
+
+}
+
+// Copy from Lab 6
+void setupSpib(void) //Call this function in main() somewhere after the DINT; line of code.
+{
+    int16_t temp = 0;
+    // Step 1.
+    // cut and paste here all the SpibRegs initializations you found for part 3. Make sure the TXdelay in
+    // between each transfer to 0. Also dont forget to cut and paste the GPIO settings for GPIO9, 63, 64, 65,
+    // 66 which are also a part of the SPIB setup.
+
+    GPIO_SetupPinMux(9, GPIO_MUX_CPU1, 0); // Set as GPIO9 and used as DAN28027 SS
+    GPIO_SetupPinOptions(9, GPIO_OUTPUT, GPIO_PUSHPULL); // Make GPIO9 an Output Pin
+    GpioDataRegs.GPASET.bit.GPIO9 = 1; //Initially Set GPIO9/SS High so DAN28027 is not selected
+
+    GPIO_SetupPinMux(66, GPIO_MUX_CPU1, 0); // Set as GPIO66 and used as MPU-9250 SS
+    GPIO_SetupPinOptions(66, GPIO_OUTPUT, GPIO_PUSHPULL); // Make GPIO66 an Output Pin
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1; //Initially Set GPIO66/SS High so MPU-9250 is not selected
+
+    GPIO_SetupPinMux(63, GPIO_MUX_CPU1, 15); //Set GPIO63 pin to SPISIMOB
+    GPIO_SetupPinMux(64, GPIO_MUX_CPU1, 15); //Set GPIO64 pin to SPISOMIB
+    GPIO_SetupPinMux(65, GPIO_MUX_CPU1, 15); //Set GPIO65 pin to SPICLKB
+
+    EALLOW;
+    GpioCtrlRegs.GPBPUD.bit.GPIO63 = 0; // Enable Pull-ups on SPI PINs Recommended by TI for SPI Pins
+    GpioCtrlRegs.GPCPUD.bit.GPIO64 = 0;
+    GpioCtrlRegs.GPCPUD.bit.GPIO65 = 0;
+    GpioCtrlRegs.GPBQSEL2.bit.GPIO63 = 3; // Set I/O pin to asynchronous mode recommended for SPI
+    GpioCtrlRegs.GPCQSEL1.bit.GPIO64 = 3; // Set I/O pin to asynchronous mode recommended for SPI
+    GpioCtrlRegs.GPCQSEL1.bit.GPIO65 = 3; // Set I/O pin to asynchronous mode recommended for SPI
+    EDIS;
+
+    // ---------------------------------------------------------------------------
+    SpibRegs.SPICCR.bit.SPISWRESET = 0; // Put SPI in Reset
+
+    SpibRegs.SPICTL.bit.CLK_PHASE = 1; //This happens to be the mode for both the DAN28027 and
+    SpibRegs.SPICCR.bit.CLKPOLARITY = 0; //The MPU-9250, Mode 01.
+    SpibRegs.SPICTL.bit.MASTER_SLAVE = 1; // Set to SPI Master
+    SpibRegs.SPICCR.bit.SPICHAR = 0xF; // Set to transmit and receive 16 bits each write to SPITXBUF
+    SpibRegs.SPICTL.bit.TALK = 1; // Enable transmission
+    SpibRegs.SPIPRI.bit.FREE = 1; // Free run, continue SPI operation
+    SpibRegs.SPICTL.bit.SPIINTENA = 0; // Disables the SPI interrupt
+
+    SpibRegs.SPIBRR.bit.SPI_BIT_RATE = 0x31; // Set SCLK bit rate to 1 MHz so 1us period. SPI base clock is
+    // 50MHZ. And this setting divides that base clock to create SCLKs period
+    SpibRegs.SPISTS.all = 0x0000; // Clear status flags just in case they are set for some reason
+    SpibRegs.SPIFFTX.bit.SPIRST = 1;// Pull SPI FIFO out of reset, SPI FIFO can resume transmit or receive.
+    SpibRegs.SPIFFTX.bit.SPIFFENA = 1; // Enable SPI FIFO enhancements
+    SpibRegs.SPIFFTX.bit.TXFIFO = 0; // Write 0 to reset the FIFO pointer to zero, and hold in reset
+    SpibRegs.SPIFFTX.bit.TXFFINTCLR = 1; // Write 1 to clear SPIFFTX[TXFFINT] flag just in case it is set
+
+    SpibRegs.SPIFFRX.bit.RXFIFORESET = 0; // Write 0 to reset the FIFO pointer to zero, and hold in reset
+    SpibRegs.SPIFFRX.bit.RXFFOVFCLR = 1; // Write 1 to clear SPIFFRX[RXFFOVF] just in case it is set
+    SpibRegs.SPIFFRX.bit.RXFFINTCLR = 1; // Write 1 to clear SPIFFRX[RXFFINT] flag just in case it is set
+    SpibRegs.SPIFFRX.bit.RXFFIENA = 1; // Enable the RX FIFO Interrupt. RXFFST >= RXFFIL
+
+    SpibRegs.SPIFFCT.bit.TXDLY = 0x10; //Set delay between transmits to 16 spi clocks. Needed by DAN28027 chip
+
+    SpibRegs.SPICCR.bit.SPISWRESET = 1; // Pull the SPI out of reset
+
+    SpibRegs.SPIFFTX.bit.TXFIFO = 1; // Release transmit FIFO from reset.
+    SpibRegs.SPIFFRX.bit.RXFIFORESET = 1; // Re-enable receive FIFO operation
+    SpibRegs.SPICTL.bit.SPIINTENA = 1; // Enables SPI interrupt. !! I dont think this is needed. Need to Test
+
+    SpibRegs.SPIFFRX.bit.RXFFIL = 0x10; //Interrupt Level to 16 words or more received into FIFO causes
+    //
+    SpibRegs.SPICCR.bit.SPICHAR = 0xF;
+    SpibRegs.SPIFFCT.bit.TXDLY = 0x00;
+    //-----------------------------------------------------------------------------------------------------------------
+
+    // Step 2.
+    // perform a multiple 16 bit transfer to initialize MPU-9250 registers 0x13,0x14,0x15,0x16
+    // 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C 0x1D, 0x1E, 0x1F. Use only one SS low to high for all these writes
+    // some code is given, most you have to fill you yourself.
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1; // Slave Select Low
+    // Perform the number of needed writes to SPITXBUF to write to all 13 registers. Remember we are
+    // sending 16 bit transfers, so two registers at a time after the first 16 bit transfer.
+    // To address 00x13 write 0x00
+    SpibRegs.SPITXBUF = 0x1300; // select register 19 and write 00
+    // To address 00x14 write 0x00
+    // To address 00x15 write 0x00
+    SpibRegs.SPITXBUF = 0x0000; // write 00 to register 20, write 00 to register 21
+    // To address 00x16 write 0x00
+    // To address 00x17 write 0x00
+    SpibRegs.SPITXBUF = 0x0000; // write 00 to register 22, write 00 to register 23
+    // To address 00x18 write 0x00
+    // To address 00x19 write 0x13
+    SpibRegs.SPITXBUF = 0x0013; // write 00 to register 24, write 13 to register 25
+    // To address 00x1A write 0x02
+    // To address 00x1B write 0x00
+    SpibRegs.SPITXBUF = 0x0200; // write 02 to register 26, write 00 to register 27
+    // To address 00x1C write 0x08
+    // To address 00x1D write 0x06
+    SpibRegs.SPITXBUF = 0x0806; // write 08 to register 28, write 06 to register 29
+    // To address 00x1E write 0x00
+    // To address 00x1F write 0x00
+    SpibRegs.SPITXBUF = 0x0000; // write 00 to register 30, write 00 to register 31
+
+    // wait for the correct number of 16 bit values to be received into the RX FIFO
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=7); // 7 parts need to received in to RX FIFO
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1; // Slave Select High
+    // clear the flags (read the Rx buffer)
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    // ???? read the additional number of garbage receive values off the RX FIFO to clear out the RX FIFO
+    DELAY_US(10); // Delay 10us to allow time for the MPU-2950 to get ready for next transfer.
+
+    // Step 3.
+    // perform a multiple 16 bit transfer to initialize MPU-9250 registers 0x23,0x24,0x25,0x26
+    // 0x27, 0x28, 0x29. Use only one SS low to high for all these writes
+    // some code is given, most you have to fill you yourself.
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1; // Slave Select Low
+    // Perform the number of needed writes to SPITXBUF to write to all 7 registers
+    // To address 00x23 write 0x00
+    SpibRegs.SPITXBUF = 0x2300; // select register 35 and write 00
+    // To address 00x24 write 0x40
+    // To address 00x25 write 0x8C
+    SpibRegs.SPITXBUF = 0x408C; // write 40 to register 36, write 8C to register 37
+    // To address 00x26 write 0x02
+    // To address 00x27 write 0x88
+    SpibRegs.SPITXBUF = 0x0288; // write 02 to register 38, write 88 to register 39
+    // To address 00x28 write 0x0C
+    // To address 00x29 write 0x0A
+    SpibRegs.SPITXBUF = 0x0C0A; // write 0C to register 40, write 0A to register 41
+
+    // wait for the correct number of 16 bit values to be received into the RX FIFO
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=4); // 4 parts need to received in to RX FIFO
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1; // Slave Select High
+    // clear the flags (read the Rx buffer)
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    temp = SpibRegs.SPIRXBUF;
+    // ???? read the additional number of garbage receive values off the RX FIFO to clear out the RX FIFO
+    DELAY_US(10); // Delay 10us to allow time for the MPU-2950 to get ready for next transfer.
+
+    // Step 4.
+    // perform a single 16 bit transfer to initialize MPU-9250 register 0x2A
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    // Write to address 0x2A the value 0x81
+    SpibRegs.SPITXBUF = 0x2A81; // Exercise 4
+    // wait for one byte to be received
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    // The Remainder of this code is given to you and you do not need to make any changes.
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x3800 | 0x0001); // 0x3800
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x3A00 | 0x0001); // 0x3A00
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x6400 | 0x0001); // 0x6400
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x6700 | 0x0003); // 0x6700
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x6A00 | 0x0020); // 0x6A00
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x6B00 | 0x0001); // 0x6B00
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x7500 | 0x0071); // 0x7500
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x7700 | 0x0016); // 0x7700 use the correct offset to make X accleration close to 0
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x7800 | 0x00D0); // 0x7800  use the correct offset to make X accleration close to 0
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x7A00 | 0x00E9); // 0x7A00  use the correct offset to make Y accleration close to 0
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x7B00 | 0x000F); // 0x7B00  use the correct offset to make Y accleration close to 0
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x7D00 | 0x001C); // 0x7D00  use the correct offset to make Z accleration close to 0
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(10);
+    GpioDataRegs.GPCCLEAR.bit.GPIO66 = 1;
+    SpibRegs.SPITXBUF = (0x7E00 | 0x0050); // 0x7E00  use the correct offset to make Z accleration close to 0
+    while(SpibRegs.SPIFFRX.bit.RXFFST !=1);
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1;
+    temp = SpibRegs.SPIRXBUF;
+    DELAY_US(50);
+    // Clear SPIB interrupt source just in case it was issued due to any of the above initializations.
+    SpibRegs.SPIFFRX.bit.RXFFOVFCLR=1; // Clear Overflow flag
+    SpibRegs.SPIFFRX.bit.RXFFINTCLR=1; // Clear Interrupt flag
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP6;
+}
+
+
+void init_eQEPs(void) {
+    // setup eQEP1 pins for input
+    EALLOW;
+    //Disable internal pull-up for the selected output pins for reduced power consumption
+    GpioCtrlRegs.GPAPUD.bit.GPIO20 = 1; // Disable pull-up on GPIO20 (EQEP1A)
+    GpioCtrlRegs.GPAPUD.bit.GPIO21 = 1; // Disable pull-up on GPIO21 (EQEP1B)
+    GpioCtrlRegs.GPAQSEL2.bit.GPIO20 = 2; // Qual every 6 samples
+    GpioCtrlRegs.GPAQSEL2.bit.GPIO21 = 2; // Qual every 6 samples
+    EDIS;
+    // This specifies which of the possible GPIO pins will be EQEP1 functional pins.
+    // Comment out other unwanted lines.
+    GPIO_SetupPinMux(20, GPIO_MUX_CPU1, 1);
+    GPIO_SetupPinMux(21, GPIO_MUX_CPU1, 1);
+    EQep1Regs.QEPCTL.bit.QPEN = 0; // make sure eqep in reset
+    EQep1Regs.QDECCTL.bit.QSRC = 0; // Quadrature count mode
+    EQep1Regs.QPOSCTL.all = 0x0; // Disable eQep Position Compare
+    EQep1Regs.QCAPCTL.all = 0x0; // Disable eQep Capture
+    EQep1Regs.QEINT.all = 0x0; // Disable all eQep interrupts
+    EQep1Regs.QPOSMAX = 0xFFFFFFFF; // use full range of the 32 bit count
+    EQep1Regs.QEPCTL.bit.FREE_SOFT = 2; // EQep uneffected by emulation suspend in Code Composer
+    EQep1Regs.QPOSCNT = 0;
+    EQep1Regs.QEPCTL.bit.QPEN = 1; // Enable EQep
+
+    // setup QEP2 pins for input
+    EALLOW;
+    //Disable internal pull-up for the selected output pinsfor reduced power consumption
+    GpioCtrlRegs.GPBPUD.bit.GPIO54 = 1; // Disable pull-up on GPIO54 (EQEP2A)
+    GpioCtrlRegs.GPBPUD.bit.GPIO55 = 1; // Disable pull-up on GPIO55 (EQEP2B)
+    GpioCtrlRegs.GPBQSEL2.bit.GPIO54 = 2; // Qual every 6 samples
+    GpioCtrlRegs.GPBQSEL2.bit.GPIO55 = 2; // Qual every 6 samples
+    EDIS;
+    GPIO_SetupPinMux(54, GPIO_MUX_CPU1, 5); // set GPIO54 and eQep2A
+    GPIO_SetupPinMux(55, GPIO_MUX_CPU1, 5); // set GPIO54 and eQep2B
+    EQep2Regs.QEPCTL.bit.QPEN = 0; // make sure qep reset
+    EQep2Regs.QDECCTL.bit.QSRC = 0; // Quadrature count mode
+    EQep2Regs.QPOSCTL.all = 0x0; // Disable eQep Position Compare
+    EQep2Regs.QCAPCTL.all = 0x0; // Disable eQep Capture
+    EQep2Regs.QEINT.all = 0x0; // Disable all eQep interrupts
+    EQep2Regs.QPOSMAX = 0xFFFFFFFF; // use full range of the 32 bit count.
+    EQep2Regs.QEPCTL.bit.FREE_SOFT = 2; // EQep uneffected by emulation suspend
+    EQep2Regs.QPOSCNT = 0;
+    EQep2Regs.QEPCTL.bit.QPEN = 1; // Enable EQep
+}
+
+float readEncLeft(void) {
+    int32_t raw = 0;
+    uint32_t QEP_maxvalue = 0xFFFFFFFFU; //4294967295U
+    raw = EQep1Regs.QPOSCNT;
+    if (raw >= QEP_maxvalue/2) raw -= QEP_maxvalue; // I don't think this is needed and never true
+    // 100 slits in the encoder disk so 100 square waves per one revolution of the
+    // DC motor's back shaft. Then Quadrature Decoder mode multiplies this by 4 so 400 counts per one rev
+    // of the DC motor's back shaft. Then the gear motor's gear ratio is 30:1.
+    return (raw*(-2*PI/12000));
+}
+
+float readEncRight(void) {
+    int32_t raw = 0;
+    uint32_t QEP_maxvalue = 0xFFFFFFFFU; //4294967295U -1 32bit signed int
+    raw = EQep2Regs.QPOSCNT;
+    if (raw >= QEP_maxvalue/2) raw -= QEP_maxvalue; // I don't think this is needed and never true
+    // 100 slits in the encoder disk so 100 square waves per one revolution of the
+    // DC motor's back shaft. Then Quadrature Decoder mode multiplies this by 4 so 400 counts per one rev
+    // of the DC motor's back shaft. Then the gear motor's gear ratio is 30:1.
+    return (raw*(2*PI/12000));
+}
+
+// Copy from lab 3
+void setEPWM2A(float controleffort){ // Function that can control the left wheel of the small car in exercise 2
+    if (controleffort >= 10){ // when controleffort larger than or equal to 10 controleffort = 10
+        controleffort = 10;
+    }
+    if (controleffort <= -10){ // when controleffort less than or equal to -10 controleffort = -10
+        controleffort = -10;
+    }
+
+    EPwm2Regs.CMPA.bit.CMPA = (EPwm2Regs.TBPRD/2) + controleffort * (EPwm2Regs.TBPRD/20); // control the duty cycle of the motor start from 0 as 50% duty cycle.
+
+}
+
+void setEPWM2B(float controleffort){ // Function that can control the right wheel of the small car in exercise 2
+    if (controleffort >= 10){ // when controleffort larger than or equal to 10 controleffort = 10
+        controleffort = 10;
+    }
+    if (controleffort <= -10){ // when controleffort less than or equal to -10 controleffort = -10
+        controleffort = -10;
+    }
+
+    EPwm2Regs.CMPB.bit.CMPB = (EPwm2Regs.TBPRD/2) + controleffort * (EPwm2Regs.TBPRD/20); // control the duty cycle of the motor start from 0 as 50% duty cycle.
+
+}
+// Copy from Lab 6 end
