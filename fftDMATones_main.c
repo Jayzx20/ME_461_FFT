@@ -103,16 +103,36 @@ void InitDma(void);
 float Gpw = 0; // Store the Power of the sound
 float Gfre = 0; // Store the frequency of the sound
 uint32_t SN = 0; // State number use for case
-uint32_t SRSN = 0; // Robot state number
+uint32_t RSN; // Robot state number
+
+float PSMC1C = 0; // Program state machine case 1 counter
+float PSMC2C = 0; // Program state machine case 2 counter
+float PSMC3C = 0; // Program state machine case 3 counter
+float PSMC4C = 0; // Program state machine case 4 counter
+float C1S = 0; // Case 1 start index
+float C2S = 0; // Case 2 start index
+float C3S = 0; // Case 3 start index
+float C4S = 0; // Case 4 start index
+
+// Case 1 Global Variable
+
+// Case 1 Global Variable End
+
+// Case 2 Global Variable
+
+// Case 2 Global Variable End
+
+// Case 3 Global Variable
 float FwdCount = 0;
-float RightTurnCount = 0;
+float TurnCount = 0;
+// Case 3 Global Variable End
+
+// Case 4 Global Variable
+
+// Case 4 Global Variable End
+
+// Test Value
 float tv = 0;
-float PSMC1C = 0;
-float PSMC2C = 0;
-float C3S = 0;
-float PSMC3C = 0;
-float PSMC4C = 0;
-float tv2 = 0;
 
 // Copy from Lab 6
 float LW = 0; // Predefine value use for lab 6 exercise 1
@@ -147,9 +167,9 @@ float turn = 0;
 // Copy from Lab 6 end
 
 // Global function
-void FPP(void); // Program state machine function
+void PSM(void); // Program state machine function
 int freIndex(float fre); // Frequency input to index converter
-void SRBSM(void);// Square Robot state machine
+void RBSM(void);// Robot state machine
 
 // Copy from Lab 6
 void setupSpib(void);
@@ -453,7 +473,7 @@ void main(void)
     while(1)
     {
         if (UARTPrint == 1 ) {
-            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f SN: %ld TV: %.0f TV2: %.0f \r\n", maxpwr, maxpwrindex*10000.0/1024.0,SN,tv,tv2);
+            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f SN: %ld TV: %.0f \r\n", maxpwr, maxpwrindex*10000.0/1024.0,SN,tv);
             Gpw = maxpwr;
             Gfre = maxpwrindex*10000.0/1024.0;
 
@@ -554,8 +574,8 @@ __interrupt void cpu_timer1_isr(void)
 {
 
     CpuTimer1.InterruptCount++;
-    if (SN != 82112|| SN != 81128 || SN != 84211 || SN != 81388){
-        FPP();
+    if (SN != 82112|| SN != 81128 || SN != 84283 || SN != 81188){
+        PSM();
     }
 
 }
@@ -612,26 +632,42 @@ __interrupt void cpu_timer2_isr(void)
     // Copy from Lab 6 end
 
     // Program state Machine Counter
-    PSMC1C++; // Program state machine case 1 counter
 
-    PSMC2C++; // Program state machine case 2 counter
-    if (C3S == 1 && PSMC3C < 14000){
-    PSMC3C++;
-    SRBSM();
+    // Sound Track 1 Movement
+    if (C1S == 1 && PSMC1C < 10000){
+        PSMC1C++; //Increase program state machine case 1 counter
+        RBSM();
     }
-    else if (PSMC3C > 14000){
-        turn = 0;
-        Vref = 0;
+    else if (PSMC1C >= 10000){
+        PSMC1C = 0;  // Reset program state machine case 1 counter
+        C1S = 0;
+    }
+    // Sound Track 1 Movement End
+
+    // Sound Track 2 Movement
+    if (C2S == 1 && PSMC2C < 10000){ // 10000 is the timer
+        PSMC2C++; // Program state machine case 2 counter
+    }
+    // Sound Track 2 Movement End
+
+    // Sound Track 3 Movement
+    if (C3S == 1 && PSMC3C < 14000){
+        PSMC3C++;
+        RBSM();
+    }
+    else if(PSMC3C >= 14000){
         PSMC3C = 0;
         C3S = 0;
-        uKR = 0;
-        uKL = 0;
     }
+    // Sound Track 3 Movement End
 
+    // Sound Track 4 Movement
+    if (C4S == 1 && PSMC4C < 10000){ // 10000 is the timer
+        PSMC4C++; // Program state machine case 4 counter
+    }
+    // Sound Track 4 Movement End
 
-    PSMC4C++; // Program state machine case 4 counter
 }
-
 
 // This function is called each time a char is recieved over UARTA.
 void serialRXA(serial_t *s, char data) {
@@ -752,54 +788,79 @@ void InitDma(void)
 
 } // end InitDma()
 //!!!!!!!!!!!!!!!!!!!!!!  End of Block
-void FPP(void){ // Lab 4 is the microphone
+
+// PSM() Function Start
+
+void PSM(void){ // Project State Machine
 
     switch(SN){
 
-    case 81128: // Merge with Lab 6 soundtrack4 74256
-        tv = 4;
-        break;
-
-    case 84211: // Circle movement soundtrack1 76543
-        tv = 1;
-        break;
-
-    case 81388: // Square Movement soundtrack3 73246
-        if (C3S == 0 && PSMC3C < 14000){
-        SRSN = 0;
-        C3S = 1;
-        tv = 2;
+    // Case 1
+    case 84283: // Circle movement soundtrack1 76573
+        if (C1S == 0 && PSMC1C < 10000){
+            RSN = 4; // Robot State Machine
+            C1S = 1;
+            tv = 1;
         }
-    break;
-
-    case 82132: // Wheelie ST2
-        tv = 3;
         break;
 
+        // Case 2
+    case 82132: // Wheelie ST2
+        if (C2S == 0 && PSMC2C < 10000){
+            // Wheelie Code
+            C2S = 1;
+            tv = 2;
+        }
+        break;
+
+        // Case 3
+    case 81188: // Square Movement soundtrack3 73377
+        if (C3S == 0 && PSMC3C < 14000){
+            RSN = 0;
+            C3S = 1;
+            tv = 3;
+        }
+        break;
+
+        // Case 4
+    case 81128: // Merge with Lab 6 soundtrack4 74256
+        if (C4S == 0 && PSMC4C < 10000){
+            // Wheelie Code
+            C4S = 1;
+            tv = 4;
+        }
+        break;
+
+        // Default Case
     default:// Wall following
         tv = 5;
-
+        turn = 0;
+        Vref = 0;
         break;
 
-}
+    }
 }
 
-void SRBSM(void){
+// PSM() Function End
 
-    switch(SRSN){
+void RBSM(void){
+
+    switch(RSN){
+
+    // For PSM() Case 3
 
     case 0: // Forward
         turn = 0;
+        Vref = 0;
         FwdCount = 0;
-        SRSN = 2;
-        tv2 = 1;
+        RSN = 2;
         break;
 
-    case 1: // Turn Right
+    case 1: // Turn Left
+        turn = 0;
         Vref = 0;
-        RightTurnCount = 0;
-        SRSN = 3;
-        tv2 = 2;
+        TurnCount = 0;
+        RSN = 3;
         break;
 
     case 2: // Forward Counter
@@ -807,27 +868,38 @@ void SRBSM(void){
         // Fwd command
         Vref = 0.15;
         // Fwd command end
-        if (FwdCount > 3000){
-            SRSN = 1;
+        if (FwdCount > 3000){ // Change to turn command after move about 3s
+            RSN = 1;
         }
-        else{
-            SRSN = 2;
+        else{ // Stay in Fwd command
+            RSN = 2;
         }
         break;
 
-    case 3: //Right Turn Counter
-        RightTurnCount++;
-        // Right Turn Command
+    case 3: //Left Turn Counter
+        TurnCount++;
+        // Left Turn Command
         turn = 0.5;
-        // Right Turn Command end
-        if (RightTurnCount > 500){
-            SRSN = 0;
+        // Left Turn Command end
+        if (TurnCount > 500){ // Change to Fwd command after turn about 0.5s
+            RSN = 0;
         }
-        else{
-            SRSN = 3;
+        else{ // Stay in turn command
+            RSN = 3;
         }
         break;
+
+        // For PSM() Case 3 End
+
+        // For PSM() Case 1
+
+    case 4: // Circle Movement
+        turn = 0.15;
+        Vref = 0.2;
+        break;
     }
+
+    // For PSM() Case 1 End
 }
 // Frequency to State Number Converter
 int freIndex(float fre){
