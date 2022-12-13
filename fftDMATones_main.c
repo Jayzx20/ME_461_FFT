@@ -131,6 +131,11 @@ float TurnCount = 0;
 
 // Case 4 Global Variable End
 
+// Case 5 Global Variable
+float BUC1 = 1500;
+float BUC2 = 1500;
+// Case 5 Global Variable End
+
 // Test Value
 float tv = 0;
 
@@ -574,7 +579,7 @@ __interrupt void cpu_timer1_isr(void)
 {
 
     CpuTimer1.InterruptCount++;
-    if (SN != 82112|| SN != 81128 || SN != 84283 || SN != 81188){
+    if (SN != 82112|| SN != 81128 || SN != 84283 || SN != 81188 || SN != 83388){
         PSM();
     }
 
@@ -631,44 +636,72 @@ __interrupt void cpu_timer2_isr(void)
     setEPWM2B(-uKL);
     // Copy from Lab 6 end
 
-    // Program state Machine Counter
+    if (GpioDataRegs.GPADAT.bit.GPIO4 == 1 && GpioDataRegs.GPADAT.bit.GPIO6 == 1 && (BUC1 >= 1500 || BUC2 >= 1500)){
+        // Program state Machine Counter
+        //else{
+        // Sound Track 1 Movement
+        if (C1S == 1 && PSMC1C < 10000){
+            PSMC1C++; //Increase program state machine case 1 counter
+            RBSM();
+        }
+        else if (PSMC1C >= 10000){
+            PSMC1C = 0;  // Reset program state machine case 1 counter
+            C1S = 0;
+        }
+        // Sound Track 1 Movement End
 
-    // Sound Track 1 Movement
-    if (C1S == 1 && PSMC1C < 10000){
-        PSMC1C++; //Increase program state machine case 1 counter
-        RBSM();
-    }
-    else if (PSMC1C >= 10000){
-        PSMC1C = 0;  // Reset program state machine case 1 counter
-        C1S = 0;
-    }
-    // Sound Track 1 Movement End
+        // Sound Track 2 Movement
+        if (C2S == 1 && PSMC2C < 10000){ // 10000 is the timer
+            PSMC2C++; // Program state machine case 2 counter
+        }
+        // Sound Track 2 Movement End
 
-    // Sound Track 2 Movement
-    if (C2S == 1 && PSMC2C < 10000){ // 10000 is the timer
-        PSMC2C++; // Program state machine case 2 counter
-    }
-    // Sound Track 2 Movement End
+        // Sound Track 3 Movement
+        if (C3S == 1 && PSMC3C < 14000){
+            PSMC3C++;
+            RBSM();
+        }
+        else if(PSMC3C >= 14000){
+            PSMC3C = 0;
+            C3S = 0;
+        }
+        // Sound Track 3 Movement End
 
-    // Sound Track 3 Movement
-    if (C3S == 1 && PSMC3C < 14000){
-        PSMC3C++;
-        RBSM();
-    }
-    else if(PSMC3C >= 14000){
-        PSMC3C = 0;
-        C3S = 0;
-    }
-    // Sound Track 3 Movement End
+        // Sound Track 4 Movement
+        if (C4S == 1 && PSMC4C < 3000){ // 10000 is the timer
+            PSMC4C++; // Program state machine case 4 counter
+            RBSM();
+        }
+        else if (PSMC4C >= 3000){
+            PSMC4C = 0;
+            C4S = 0;
+        }
 
-    // Sound Track 4 Movement
-    if (C4S == 1 && PSMC4C < 10000){ // 10000 is the timer
-        PSMC4C++; // Program state machine case 4 counter
-    }
-    // Sound Track 4 Movement End
+        // Sound Track 4 Movement End
+        //}
 
+    }
+    else{
+        if((GpioDataRegs.GPADAT.bit.GPIO4) == 0){
+            BUC1 = 0;
+        }
+        if (BUC1 < 1500){
+            Vref = -0.15;
+            turn = -0.05;
+            BUC1++;
+        }
+
+
+        if ((GpioDataRegs.GPADAT.bit.GPIO6) == 0){
+            BUC2 = 0;
+        }
+        if (BUC2 < 1500){
+            Vref = -0.15;
+            turn = 0.05;
+            BUC2++;
+        }
+    }
 }
-
 // This function is called each time a char is recieved over UARTA.
 void serialRXA(serial_t *s, char data) {
     numRXA ++;
@@ -821,11 +854,17 @@ void PSM(void){ // Project State Machine
             tv = 3;
         }
         break;
-
+    case 83388: // Square Movement soundtrack3 73377
+        if (C3S == 0 && PSMC3C < 14000){
+            RSN = 0;
+            C3S = 1;
+            tv = 3;
+        }
+        break;
         // Case 4
-    case 81128: // Merge with Lab 6 soundtrack4 74256
-        if (C4S == 0 && PSMC4C < 10000){
-            // Wheelie Code
+    case 81128: // 8 movement
+        if (C4S == 0 && PSMC4C < 5000){
+            RSN = 5;
             C4S = 1;
             tv = 4;
         }
@@ -897,10 +936,16 @@ void RBSM(void){
         turn = 0.15;
         Vref = 0.2;
         break;
+
+    case 5: // Back up
+        // Fwd command
+        Vref = -0.15;
+        turn = 0;
     }
 
     // For PSM() Case 1 End
 }
+
 // Frequency to State Number Converter
 int freIndex(float fre){
 
