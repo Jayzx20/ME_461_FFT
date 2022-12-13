@@ -637,8 +637,7 @@ __interrupt void cpu_timer2_isr(void)
     // Copy from Lab 6 end
 
     if (GpioDataRegs.GPADAT.bit.GPIO4 == 1 && GpioDataRegs.GPADAT.bit.GPIO6 == 1 && (BUC1 >= 1500 || BUC2 >= 1500)){
-        // Program state Machine Counter
-        //else{
+
         // Sound Track 1 Movement
         if (C1S == 1 && PSMC1C < 10000){
             PSMC1C++; //Increase program state machine case 1 counter
@@ -678,8 +677,6 @@ __interrupt void cpu_timer2_isr(void)
         }
 
         // Sound Track 4 Movement End
-        //}
-
     }
     else{
         if((GpioDataRegs.GPADAT.bit.GPIO4) == 0){
@@ -690,7 +687,6 @@ __interrupt void cpu_timer2_isr(void)
             turn = -0.05;
             BUC1++;
         }
-
 
         if ((GpioDataRegs.GPADAT.bit.GPIO6) == 0){
             BUC2 = 0;
