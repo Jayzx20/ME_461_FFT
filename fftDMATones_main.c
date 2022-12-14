@@ -102,17 +102,17 @@ void InitDma(void);
 // Global Varible
 float Gpw = 0; // Store the Power of the sound
 float Gfre = 0; // Store the frequency of the sound
-uint32_t SN = 0; // State number use for case
-uint32_t RSN; // Robot state number
+uint32_t StateNumber = 0; // State number use for case
+uint32_t RobotStateNumber; // Robot state number
 
 float PSMC1C = 0; // Program state machine case 1 counter
 float PSMC2C = 0; // Program state machine case 2 counter
 float PSMC3C = 0; // Program state machine case 3 counter
 float PSMC4C = 0; // Program state machine case 4 counter
-float C1S = 0; // Case 1 start index
-float C2S = 0; // Case 2 start index
-float C3S = 0; // Case 3 start index
-float C4S = 0; // Case 4 start index
+float Case1Start = 0; // Case 1 start index
+float Case2Start = 0; // Case 2 start index
+float Case3Start = 0; // Case 3 start index
+float Case4Start = 0; // Case 4 start index
 
 // Case 1 Global Variable
 
@@ -132,8 +132,8 @@ float TurnCount = 0;
 // Case 4 Global Variable End
 
 // Case 5 Global Variable
-float BUC1 = 1500;
-float BUC2 = 1500;
+float BackUpCount1 = 1500;
+float BackUpCount2 = 1500;
 // Case 5 Global Variable End
 
 // Test Value
@@ -141,7 +141,9 @@ float tv = 0;
 
 // Copy from Lab 6
 float LW = 0; // Predefine value use for lab 6 exercise 1
+float LW_1 = 0;
 float RW = 0; // Predefine value use for lab 6 exercise 1
+float RW_1 = 0;
 float LWF = 0; // Predefine value use for lab 6 exercise 1
 float RWF = 0; // Predefine value use for lab 6 exercise 1
 float uLeft = 5.0; // Predefine value use for lab 6 exercise 1
@@ -171,6 +173,118 @@ float eT = 0; // Predefine value use for lab 6 exercise 4
 float turn = 0;
 // Copy from Lab 6 end
 
+// Cole
+int16_t AX = 0; //Predefine value use for Exercise 4
+int16_t AY = 0; //Predefine value use for Exercise 4
+int16_t AZ = 0; //Predefine value use for Exercise 4
+int16_t TO = 0; //Predefine value use for Exercise 4
+int16_t GX = 0; //Predefine value use for Exercise 4
+int16_t GY = 0; //Predefine value use for Exercise 4
+int16_t GZ = 0; //Predefine value use for Exercise 4
+float AX_S = 0; //Predefine value use for Exercise 4
+float AY_S = 0; //Predefine value use for Exercise 4
+float AZ_S = 0; //Predefine value use for Exercise 4
+float GX_S = 0; //Predefine value use for Exercise 4
+float GY_S = 0; //Predefine value use for Exercise 4
+float GZ_S = 0; //Predefine value use for Exercise 4
+// Lab7 exercise 2 given
+float accelx_offset = 0;
+float accely_offset = 0;
+float accelz_offset = 0;
+float gyrox_offset  = 0;
+float gyroy_offset  = 0;
+float gyroz_offset  = 0;
+float accelzBalancePoint = -.78;//-0.76
+int16 IMU_data[9];
+uint16_t temp=0;
+int16_t doneCal = 0;
+float tilt_value    = 0;
+float tilt_array[4] = {0, 0, 0, 0};
+float gyro_value    = 0;
+float gyro_array[4] = {0, 0, 0, 0};
+float LeftWheel = 0;
+float RightWheel = 0;
+float LeftWheelArray[4] = {0,0,0,0};
+float RightWheelArray[4] = {0,0,0,0};
+// Kalman Filter vars
+float T = 0.001;        //sample rate, 1ms
+float Q = 0.01; // made global to enable changing in runtime
+float R = 25000;//50000;
+float kalman_tilt = 0;
+float kalman_P = 22.365;
+int16_t SpibNumCalls = -1;
+float pred_P = 0;
+float kalman_K = 0;
+int32_t timecount = 0;
+int16_t calibration_state = 0;
+int32_t calibration_count = 0;
+
+float velLeft = 0;
+float velLeft_1 = 0;
+float velRight = 0;
+float velRight_1 = 0;
+float gyrorate_dot = 0;
+float gyrorate_dot_1 = 0;
+float gyro_value_1 = 0;
+float AvgWheelVel;
+float AvgWheelVel_1;
+float errorvel;
+float errorvel_1;
+float DVel;
+float intDiffVel;
+float intDiffVel_1;
+float FwdBackOffset = 0;
+float FwdBackOffset_1 = 0;
+float KpVel = 0.35;
+float KiVel = 1.5;
+float WhlDiff = 0;
+float WhlDiff_1 = 0;
+float vel_WhlDiff = 0;
+float vel_WhlDiff_1 = 0;
+float intDiff = 0;
+float intDiff_1 = 0;
+float errorDiff = 0;
+float errorDiff_1 = 0;
+float turnref = 0;
+float turnref_1;
+float turnrate;
+float turnrate_1;
+float ubal = 0;
+float K1 = -60;
+float K2 = -4.5;
+float K3 = -1.1;
+float K4 = -0.1;
+float turnC;
+float KpC = 3.0;
+float KiC = 20.0;
+float KdC = 0.08;
+int16_t wheelie = 1;
+int16_t WheelieTime = 0;
+int16_t accel_time = 750;
+int16_t stop_time = 875;
+int16_t balance_time = 1500;
+int16_t end_time = 2000;
+float uLeftMax = 8.5;
+float uRightMax = 8.5;
+float uLeftStop = 0;
+float uRightStop = 0;
+// Cole End
+
+// Kerry
+uint16_t adca0result = 0;
+uint16_t adca1result = 0;
+uint16_t adca2result = 0;
+float voltsADCINA_Left = 0;
+float voltsADCINA_Right = 0;
+float voltsADCINA_Front = 0;
+// Kerry End
+
+// Zehan
+float IR_angle = -10;
+// Zehan End
+
+// Gloabl Variable End
+
 // Global function
 void PSM(void); // Program state machine function
 int freIndex(float fre); // Frequency input to index converter
@@ -183,6 +297,20 @@ float readEncLeft(void);
 float readEncRight(void);
 void setEPWM2A(float controleffort);
 void setEPWM2B(float controleffort);
+
+// Cole
+__interrupt void SPIB_isr(void);
+// Cole End
+
+// Kerry
+__interrupt void ADCA_ISR(void);
+// Kerry End
+
+// Zehan
+void setEPWM8A_RCServo(float angle);
+// Zehan End
+
+
 // Copy from Lab 6 end
 
 // Interrupt Service Routines predefinition
@@ -297,6 +425,15 @@ void main(void)
     PieVectTable.DMA_CH1_INT = &DMA_ISR;
     //!!!!!!!!!!!!!!!!!!!!!!  End of Block
     PieVectTable.EMIF_ERROR_INT = &SWI_isr;
+
+    // Cole
+    PieVectTable.SPIB_RX_INT = &SPIB_isr;// Set up PieVect Table for our interrupt
+    // Cole End
+
+    // Kerry
+    PieVectTable.ADCA1_INT = &ADCA_ISR;
+    // Kerry End
+
     EDIS;    // This is needed to disable write to EALLOW protected registers
 
 
@@ -308,7 +445,7 @@ void main(void)
     // 200MHz CPU Freq, 1 second Period (in uSeconds)
     ConfigCpuTimer(&CpuTimer0, 200, 2000000); // 1000 = 1ms, 1s
     ConfigCpuTimer(&CpuTimer1, 200, 2000000); // 1s
-    ConfigCpuTimer(&CpuTimer2, 200, 1000);
+    ConfigCpuTimer(&CpuTimer2, 200, 4000);
 
     // Enable CpuTimer Interrupt bit TIE
     CpuTimer0Regs.TCR.all = 0x4000;
@@ -354,26 +491,66 @@ void main(void)
     EPwm7Regs.TBCTL.bit.CTRMODE = 0x00; //unfreeze, and enter up count mode
     EDIS;
 
+    // Kerry
+    EALLOW;
+    EPwm5Regs.ETSEL.bit.SOCAEN = 0; // Disable SOC on A group
+    EPwm5Regs.TBCTL.bit.CTRMODE = 3; // freeze counter
+    EPwm5Regs.ETSEL.bit.SOCASEL = 2; // Select Event when counter equal to PRD (???)
+    EPwm5Regs.ETPS.bit.SOCAPRD = 1; // Generate pulse on 1st event (pulse is the same as trigger) (???)
+    EPwm5Regs.TBCTR = 0x0; // Clear counter
+    EPwm5Regs.TBPHS.bit.TBPHS = 0x0000; // Phase is 0
+    EPwm5Regs.TBCTL.bit.PHSEN = 0; // Disable phase loading
+    EPwm5Regs.TBCTL.bit.CLKDIV = 0; // divide by 1 50Mhz Clock
+    EPwm5Regs.TBPRD = 50000; // Set Period to 1ms sample. Input clock is 50MHz. (TBPRD * 1/50000000 = 1/1000)
+    // Notice here that we are not setting CMPA or CMPB because we are not using the PWM signal
+    EPwm5Regs.ETSEL.bit.SOCAEN = 1; //enable SOCA
+    //    EPwm5Regs.TBCTL.bit.CTRMODE = 0; //unfreeze, and enter up count mode (???)
+    EDIS;
+    // Kerry End
+
+    // Zehan
+    EPwm8Regs.TBCTL.bit.CTRMODE = 0; // Set TBCTL in Up count mode.
+    EPwm8Regs.TBCTL.bit.FREE_SOFT = 2; // Let the PWM go free run when I set a breakpoint.
+    EPwm8Regs.TBCTL.bit.PHSEN = 0; // disable the phase loading.
+    EPwm8Regs.TBCTL.bit.CLKDIV = 5; // Clock divide by 32.
+    EPwm8Regs.TBCTR = 0; // Start the timer at zero.
+    EPwm8Regs.TBPRD = 15000; // Set peri od to 50Hz, 31250/50000000/32=1/50
+    EPwm8Regs.CMPA.bit.CMPA = 2500; // Start duty cycle 8%.
+    EPwm8Regs.CMPB.bit.CMPB = 2500; // Start duty cycle 8%.
+    EPwm8Regs.AQCTLA.bit.CAU = 1; // Set TBCTR to clear when reach CMPA value.
+    EPwm8Regs.AQCTLA.bit.ZRO = 2; // Set TBCTR to set when TBCTR is zero.
+    EPwm8Regs.AQCTLB.bit.CBU = 1; // Set TBCTR for to clear when reach CMPA value. EPWM2B
+    EPwm8Regs.AQCTLB.bit.ZRO = 2; // Set TBCTR to set when TBCTR is zero.EPWM2B
+    EPwm8Regs.TBPHS.bit.TBPHS = 0; // Set phase to zero.
+
+    GPIO_SetupPinMux(14, GPIO_MUX_CPU1, 1); // Set GPIO14 is EPWM8A output pin.////////////////////////////////////////////////////////////////
+    // Zehan end
+
     EALLOW;
     //write configurations for all ADCs ADCA, ADCB, ADCC, ADCD
     AdcaRegs.ADCCTL2.bit.PRESCALE = 6; //set ADCCLK divider to /4
-    AdcbRegs.ADCCTL2.bit.PRESCALE = 6; //set ADCCLK divider to /4
-    AdccRegs.ADCCTL2.bit.PRESCALE = 6; //set ADCCLK divider to /4
-    AdcdRegs.ADCCTL2.bit.PRESCALE = 6; //set ADCCLK divider to /4
     AdcSetMode(ADC_ADCA, ADC_RESOLUTION_12BIT, ADC_SIGNALMODE_SINGLE); //read calibration settings
-    AdcSetMode(ADC_ADCB, ADC_RESOLUTION_12BIT, ADC_SIGNALMODE_SINGLE); //read calibration settings
-    AdcSetMode(ADC_ADCC, ADC_RESOLUTION_12BIT, ADC_SIGNALMODE_SINGLE); //read calibration settings
-    AdcSetMode(ADC_ADCD, ADC_RESOLUTION_12BIT, ADC_SIGNALMODE_SINGLE); //read calibration settings
     //Set pulse positions to late
     AdcaRegs.ADCCTL1.bit.INTPULSEPOS = 1;
-    AdcbRegs.ADCCTL1.bit.INTPULSEPOS = 1;
-    AdccRegs.ADCCTL1.bit.INTPULSEPOS = 1;
-    AdcdRegs.ADCCTL1.bit.INTPULSEPOS = 1; //power up the ADCs
-    AdcaRegs.ADCCTL1.bit.ADCPWDNZ = 1;
-    AdcbRegs.ADCCTL1.bit.ADCPWDNZ = 1;
-    AdccRegs.ADCCTL1.bit.ADCPWDNZ = 1;
-    AdcdRegs.ADCCTL1.bit.ADCPWDNZ = 1; //delay for 1ms to allow ADC time to power up
+
+    AdcaRegs.ADCCTL1.bit.ADCPWDNZ = 1; //delay for 1ms to allow ADC time to power up
     DELAY_US(1000);
+
+    // Kerry ADCA
+    AdcaRegs.ADCSOC0CTL.bit.CHSEL = 2;
+    AdcaRegs.ADCSOC0CTL.bit.ACQPS = 99;
+    AdcaRegs.ADCSOC0CTL.bit.TRIGSEL = 13;
+    AdcaRegs.ADCSOC1CTL.bit.CHSEL = 3;
+    AdcaRegs.ADCSOC1CTL.bit.ACQPS = 99;
+    AdcaRegs.ADCSOC1CTL.bit.TRIGSEL = 13;
+    AdcaRegs.ADCSOC2CTL.bit.CHSEL = 4; //line added to Lab 7 code to read the "front IR" sensor
+    AdcaRegs.ADCSOC2CTL.bit.ACQPS = 99; //line added to Lab 7 code to read the "front IR" sensor
+    AdcaRegs.ADCSOC2CTL.bit.TRIGSEL = 13; //line added to Lab 7 code to read the "front IR" sensor
+    AdcaRegs.ADCINTSEL1N2.bit.INT1SEL = 2; //changed value to "2" to read last soc
+    AdcaRegs.ADCINTSEL1N2.bit.INT1E = 1;
+    AdcaRegs.ADCINTFLGCLR.bit.ADCINT1 = 1;
+    // Kerry ADCA End
+
     //ADCB
     AdcbRegs.ADCSOC0CTL.bit.CHSEL = 4; //SOC0 will convert Channel you choose Does not have to be B0
     AdcbRegs.ADCSOC0CTL.bit.ACQPS = 99; //sample window is acqps + 1 SYSCLK cycles = 500ns
@@ -401,6 +578,7 @@ void main(void)
     IER |= M_INT12;
     IER |= M_INT13;
     IER |= M_INT14;
+    IER |= M_INT6;
 
     // Enable TINT0 in the PIE: Group 1 interrupt 7
     PieCtrlRegs.PIEIER1.bit.INTx7 = 1;
@@ -478,7 +656,7 @@ void main(void)
     while(1)
     {
         if (UARTPrint == 1 ) {
-            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f SN: %ld TV: %.0f \r\n", maxpwr, maxpwrindex*10000.0/1024.0,SN,tv);
+            serial_printf(&SerialA, "Power: %.3f Frequency: %.0f SN: %ld TV: %.0f \r\n", maxpwr, maxpwrindex*10000.0/1024.0,StateNumber,tv);
             Gpw = maxpwr;
             Gfre = maxpwrindex*10000.0/1024.0;
 
@@ -559,12 +737,12 @@ __interrupt void cpu_timer0_isr(void)
 {
     CpuTimer0.InterruptCount++;
 
-    SN = (SN * 10 + freIndex(Gfre)) % 100000;
+    StateNumber = (StateNumber * 10 + freIndex(Gfre)) % 100000;
 
     numTimer0calls++;
 
     // if ((numTimer0calls%50) == 0) {
-    //     PieCtrlRegs.PIEIFR12.bit.INTx9 = 1;  // Manually cause the interrupt for the SWI  
+    //     PieCtrlRegs.PIEIFR12.bit.INTx9 = 1;  // Manually cause the interrupt for the SWI
     // }
 
     // Blink LaunchPad Red LED
@@ -579,7 +757,7 @@ __interrupt void cpu_timer1_isr(void)
 {
 
     CpuTimer1.InterruptCount++;
-    if (SN != 82112|| SN != 81128 || SN != 84283 || SN != 81188 || SN != 83388){
+    if (StateNumber != 82132 || StateNumber != 82112 || StateNumber != 81128 || StateNumber != 84283 || StateNumber != 81188 || StateNumber != 83388){
         PSM();
     }
 
@@ -595,10 +773,9 @@ __interrupt void cpu_timer2_isr(void)
     //  if ((CpuTimer2.InterruptCount % 50) == 0) {
     //      UARTPrint = 1;
     //  }
-
-    // Copy from Lab 6
     LW = readEncLeft(); // in radiant
     RW = readEncRight(); // in radiant
+    // Copy from Lab 6
     PLK = LW/4.95;
     VLK = (PLK - PLK_1)/0.004;
     PLK_1 = PLK;
@@ -632,69 +809,84 @@ __interrupt void cpu_timer2_isr(void)
     else{
         IKR1 = IKR;
     }
+
     setEPWM2A(uKR);
     setEPWM2B(-uKL);
     // Copy from Lab 6 end
 
-    if (GpioDataRegs.GPADAT.bit.GPIO4 == 1 && GpioDataRegs.GPADAT.bit.GPIO6 == 1 && (BUC1 >= 1500 || BUC2 >= 1500)){
+    // Zehan Servo
+    if ((GpioDataRegs.GPADAT.bit.GPIO5)== 1) {
+        setEPWM8A_RCServo(IR_angle);
+    }
+    if ((GpioDataRegs.GPADAT.bit.GPIO5)== 0) {
+        setEPWM8A_RCServo(-90.0);
+    }
+    // Zehan Servo End
+
+    if (GpioDataRegs.GPADAT.bit.GPIO4 == 1 && GpioDataRegs.GPADAT.bit.GPIO6 == 1 && (BackUpCount1 >= 1500 || BackUpCount2 >= 1500)){
+
+        // Program state Machine Counter
 
         // Sound Track 1 Movement
-        if (C1S == 1 && PSMC1C < 10000){
+        if (Case1Start == 1 && PSMC1C < 10000){
             PSMC1C++; //Increase program state machine case 1 counter
             RBSM();
-        }
-        else if (PSMC1C >= 10000){
+        } else if (PSMC1C >= 10000){
             PSMC1C = 0;  // Reset program state machine case 1 counter
-            C1S = 0;
+            Case1Start = 0;
         }
         // Sound Track 1 Movement End
 
         // Sound Track 2 Movement
-        if (C2S == 1 && PSMC2C < 10000){ // 10000 is the timer
+        if (Case2Start == 1 && PSMC2C < 2500){ // 10000 is the timer
             PSMC2C++; // Program state machine case 2 counter
+            RBSM();
+        } else if (PSMC2C >= 2500){
+            PSMC2C = 0;
+            Case2Start = 0;
+
         }
         // Sound Track 2 Movement End
 
         // Sound Track 3 Movement
-        if (C3S == 1 && PSMC3C < 14000){
+        if (Case3Start == 1 && PSMC3C < 14000){
             PSMC3C++;
             RBSM();
-        }
-        else if(PSMC3C >= 14000){
+        } else if(PSMC3C >= 14000){
             PSMC3C = 0;
-            C3S = 0;
+            Case3Start = 0;
         }
         // Sound Track 3 Movement End
 
         // Sound Track 4 Movement
-        if (C4S == 1 && PSMC4C < 3000){ // 10000 is the timer
+        if (Case4Start == 1 && PSMC4C < 3000){ // 10000 is the timer
             PSMC4C++; // Program state machine case 4 counter
             RBSM();
-        }
-        else if (PSMC4C >= 3000){
+        } else if (PSMC4C >= 3000){
             PSMC4C = 0;
-            C4S = 0;
+            Case4Start = 0;
         }
-
         // Sound Track 4 Movement End
+
     }
     else{
         if((GpioDataRegs.GPADAT.bit.GPIO4) == 0){
-            BUC1 = 0;
+            BackUpCount1 = 0;
         }
-        if (BUC1 < 1500){
+        if (BackUpCount1 < 1500){
             Vref = -0.15;
             turn = -0.05;
-            BUC1++;
+            BackUpCount1++;
         }
 
+
         if ((GpioDataRegs.GPADAT.bit.GPIO6) == 0){
-            BUC2 = 0;
+            BackUpCount2 = 0;
         }
-        if (BUC2 < 1500){
+        if (BackUpCount2 < 1500){
             Vref = -0.15;
             turn = 0.05;
-            BUC2++;
+            BackUpCount2++;
         }
     }
 }
@@ -822,46 +1014,63 @@ void InitDma(void)
 
 void PSM(void){ // Project State Machine
 
-    switch(SN){
+    switch(StateNumber){
 
     // Case 1
     case 84283: // Circle movement soundtrack1 76573
-        if (C1S == 0 && PSMC1C < 10000){
-            RSN = 4; // Robot State Machine
-            C1S = 1;
+        if (Case1Start == 0 && PSMC1C < 10000){
+            RobotStateNumber = 4; // Robot State Machine
+            Case1Start = 1;
+            tv = 1;
+        }
+        break;
+    case 84213: // Circle movement soundtrack1 76573
+        if (Case1Start == 0 && PSMC1C < 10000){
+            RobotStateNumber = 4; // Robot State Machine
+            Case1Start = 1;
             tv = 1;
         }
         break;
 
         // Case 2
     case 82132: // Wheelie ST2
-        if (C2S == 0 && PSMC2C < 10000){
+        if (Case2Start == 0 && PSMC2C < 2500){
             // Wheelie Code
-            C2S = 1;
+            RobotStateNumber = 6;
+            Case2Start = 1;
+            tv = 2;
+        }
+        break;
+
+    case 82112: // Wheelie ST2
+        if (Case2Start == 0 && PSMC2C < 2500){
+            // Wheelie Code
+            RobotStateNumber = 6;
+            Case2Start = 1;
             tv = 2;
         }
         break;
 
         // Case 3
     case 81188: // Square Movement soundtrack3 73377
-        if (C3S == 0 && PSMC3C < 14000){
-            RSN = 0;
-            C3S = 1;
+        if (Case3Start == 0 && PSMC3C < 14000){
+            RobotStateNumber = 0;
+            Case3Start = 1;
             tv = 3;
         }
         break;
     case 83388: // Square Movement soundtrack3 73377
-        if (C3S == 0 && PSMC3C < 14000){
-            RSN = 0;
-            C3S = 1;
+        if (Case3Start == 0 && PSMC3C < 14000){
+            RobotStateNumber = 0;
+            Case3Start = 1;
             tv = 3;
         }
         break;
         // Case 4
     case 81128: // 8 movement
-        if (C4S == 0 && PSMC4C < 5000){
-            RSN = 5;
-            C4S = 1;
+        if (Case4Start == 0 && PSMC4C < 5000){
+            RobotStateNumber = 5;
+            Case4Start = 1;
             tv = 4;
         }
         break;
@@ -880,7 +1089,7 @@ void PSM(void){ // Project State Machine
 
 void RBSM(void){
 
-    switch(RSN){
+    switch(RobotStateNumber){
 
     // For PSM() Case 3
 
@@ -888,14 +1097,14 @@ void RBSM(void){
         turn = 0;
         Vref = 0;
         FwdCount = 0;
-        RSN = 2;
+        RobotStateNumber = 2;
         break;
 
     case 1: // Turn Left
         turn = 0;
         Vref = 0;
         TurnCount = 0;
-        RSN = 3;
+        RobotStateNumber = 3;
         break;
 
     case 2: // Forward Counter
@@ -904,10 +1113,10 @@ void RBSM(void){
         Vref = 0.15;
         // Fwd command end
         if (FwdCount > 3000){ // Change to turn command after move about 3s
-            RSN = 1;
+            RobotStateNumber = 1;
         }
         else{ // Stay in Fwd command
-            RSN = 2;
+            RobotStateNumber = 2;
         }
         break;
 
@@ -917,16 +1126,12 @@ void RBSM(void){
         turn = 0.5;
         // Left Turn Command end
         if (TurnCount > 500){ // Change to Fwd command after turn about 0.5s
-            RSN = 0;
+            RobotStateNumber = 0;
         }
         else{ // Stay in turn command
-            RSN = 3;
+            RobotStateNumber = 3;
         }
         break;
-
-        // For PSM() Case 3 End
-
-        // For PSM() Case 1
 
     case 4: // Circle Movement
         turn = 0.15;
@@ -937,9 +1142,50 @@ void RBSM(void){
         // Fwd command
         Vref = -0.15;
         turn = 0;
+        break;
+    case 6: // Wheelie
+
+        WheelieTime++;
+        turn = 0;
+        if (WheelieTime < accel_time && WheelieTime > 0){
+            Vref = 0.8;
+        }
+        else if(WheelieTime < stop_time && WheelieTime > accel_time){
+            Vref = 0;
+        } else if (WheelieTime < balance_time && WheelieTime > stop_time){
+            velLeft = 0.6*velLeft_1 + 100*LW - 100*LW_1;
+            velRight = 0.6*velRight_1 + 100*RW - 100*RW_1;
+
+            gyrorate_dot = 0.6*gyrorate_dot_1 + 100*gyro_value - 100*gyro_value_1;
+
+            ubal = -K1*tilt_value - K2*gyro_value - K3*(velLeft + velRight)/2.0 - K4*gyrorate_dot;
+
+            uKL = ubal/2;
+            uKR = ubal/2;
+        } else if (WheelieTime < end_time && WheelieTime > balance_time){
+            //wheelie = 0;
+            WheelieTime = 0;
+            Vref = 0;
+        }
+        //        //if(WheelieTime <1000){
+        //        // Run
+        //        //}
+        //        if(WheelieTime < accel_time && WheelieTime > 0){
+        //            uKL = uLeftMax;
+        //            uKR = uRightMax;
+        //        } else if(WheelieTime < stop_time && WheelieTime > accel_time){
+        //            uKL = uLeftStop;
+        //            uKR = uRightStop;
+        //        } else if (WheelieTime < balance_time && WheelieTime > stop_time){
+        //            uKL = ubal/2;
+        //            uKR = ubal/2;
+        //        } else if (WheelieTime < end_time && WheelieTime > balance_time){
+        //            //wheelie = 0;
+        //            WheelieTime = 0;
+        //        }
+        break;
     }
 
-    // For PSM() Case 1 End
 }
 
 // Frequency to State Number Converter
@@ -1313,3 +1559,217 @@ void setEPWM2B(float controleffort){ // Function that can control the right whee
 
 }
 // Copy from Lab 6 end
+
+// Zehan
+void setEPWM8A_RCServo(float angle){ // Exercise 3 Function that control the RC servo that connect to GPIO14, EPwm8A
+    if (angle >= 90){ // When angle reach 90, the angle will not exceed 90
+        angle = 90;
+    }
+    if (angle <= -90){ // When angle reach 90, the angle will not exceed 90
+        angle = -90;
+    }
+    EPwm8Regs.CMPA.bit.CMPA = (angle+90)*(2500/180)+1250; // Start the angle to 0 degree which the duty cycle is 8%
+}
+// Zehan end
+
+// Kerry
+__interrupt void ADCA_ISR(void){
+    adca0result = AdcaResultRegs.ADCRESULT0;
+    adca1result = AdcaResultRegs.ADCRESULT1;
+    adca2result = AdcaResultRegs.ADCRESULT2;
+    voltsADCINA_Left = 3.0 - adca0result*(3.0/4096.0);
+    voltsADCINA_Right = 3.0 - adca1result*(3.0/4096.0);
+    voltsADCINA_Front = 3.0 - adca2result*(3.0/4096.0); //line added to Lab 7 code to read the "front IR" sensor
+    AdcbRegs.ADCINTFLGCLR.bit.ADCINT1 = 1; //clear interrupt flag
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+}
+// Kerry End
+int16_t spivalue1 = 0; // value predefine
+int16_t spivalue2 = 0; // value predefine
+int16_t spivalue0 = 0; // Exercise 3 value predefine
+int16_t dummy = 0; // Exercise 4 the first trash value
+__interrupt void SPIB_isr(void){
+
+    GpioDataRegs.GPCSET.bit.GPIO66 = 1; // Initially Set GPIO66/SS High so MPU-9250 is not selected
+
+    dummy = SpibRegs.SPIRXBUF; //read trash data
+    AX = SpibRegs.SPIRXBUF; //read accelerometer X
+    AY = SpibRegs.SPIRXBUF; //read accelerometer Y
+    AZ = SpibRegs.SPIRXBUF; //read accelerometer Z
+    TO = SpibRegs.SPIRXBUF; //read Temperature but useless.
+    GX = SpibRegs.SPIRXBUF; //read gyro X
+    GY = SpibRegs.SPIRXBUF; //read gyro Y
+    GZ = SpibRegs.SPIRXBUF; //read gyro Z
+
+    AX_S = AX * (4.0/32767.0); //convert accleration in x coordinate position into scale of -4g~4g
+    AY_S = AY * (4.0/32767.0); //convert accleration in Y coordinate position into scale of -4g~4g
+    AZ_S = AZ * (4.0/32767.0); //convert accleration in Z coordinate position into scale of -4g~4g
+
+    GX_S = GX * (250.0/32767.0); //convert gyro X into scale of -250 to 250 degree
+    GY_S = GY * (250.0/32767.0); //convert gyro Y into scale of -250 to 250 degree
+    GZ_S = GZ * (250.0/32767.0); //convert gyro Z into scale of -250 to 250 degree
+
+    //Code to be copied into SPIB_ISR interrupt function after the IMU measurements have been collected.
+    //Code to be copied into SPIB_ISR interrupt function after the IMU measurements have been collected.
+    if(calibration_state == 0){
+        calibration_count++;
+        if (calibration_count == 2000) {
+            calibration_state = 1;
+            calibration_count = 0;
+        }
+    } else if(calibration_state == 1){
+        accelx_offset+=AX_S;
+        accely_offset+=AY_S;
+        accelz_offset+=AZ_S;
+        gyrox_offset+=GX_S;
+        gyroy_offset+=GY_S;
+        gyroz_offset+=GZ_S;
+        calibration_count++;
+        if (calibration_count == 2000) {
+            calibration_state = 2;
+            accelx_offset/=2000.0;
+            accely_offset/=2000.0;
+            accelz_offset/=2000.0;
+            gyrox_offset/=2000.0;
+            gyroy_offset/=2000.0;
+            gyroz_offset/=2000.0;
+            calibration_count = 0;
+            doneCal = 1;
+        }
+    } else if(calibration_state == 2){
+        AX_S -=(accelx_offset);
+        AY_S -=(accely_offset);
+        AZ_S -=(accelz_offset-accelzBalancePoint);
+        GX_S -= gyrox_offset;
+        GY_S -= gyroy_offset;
+        GZ_S -= gyroz_offset;
+
+        /*--------------Kalman Filtering code start---------------------------------------------------------------------*/
+        float tiltrate = (GX_S*PI)/180.0; // rad/s
+        float pred_tilt, z, y, S;
+
+        // Prediction Step
+        pred_tilt = kalman_tilt + T*tiltrate;
+        pred_P = kalman_P + Q;
+
+        // Update Step
+        z = -AZ_S;  // Note the negative here due to the polarity of AccelZ
+        y = z - pred_tilt;
+        S = pred_P + R;
+        kalman_K = pred_P/S;
+        kalman_tilt = pred_tilt + kalman_K*y;
+        kalman_P = (1 - kalman_K)*pred_P;
+
+        SpibNumCalls++;
+        // Kalman Filter used
+        tilt_array[SpibNumCalls] = kalman_tilt;
+        gyro_array[SpibNumCalls] = tiltrate;
+        LeftWheelArray[SpibNumCalls] = readEncLeft();
+        RightWheelArray[SpibNumCalls] = readEncRight();
+
+        if (SpibNumCalls >= 3) {  // should never be greater than 3
+            tilt_value = (tilt_array[0] + tilt_array[1] + tilt_array[2] + tilt_array[3])/4.0;
+            gyro_value = (gyro_array[0] + gyro_array[1] + gyro_array[2] + gyro_array[3])/4.0;
+            LeftWheel=(LeftWheelArray[0]+LeftWheelArray[1]+LeftWheelArray[2]+LeftWheelArray[3])/4.0;
+            RightWheel=(RightWheelArray[0]+RightWheelArray[1]+RightWheelArray[2]+RightWheelArray[3])/4.0;
+            SpibNumCalls = -1;
+
+            PieCtrlRegs.PIEIFR12.bit.INTx9 = 1;  // Manually cause the interrupt for the SWI
+        }
+    }
+
+    timecount++;
+
+    if((timecount%200) == 0)
+    {
+        if(doneCal == 0) {
+            GpioDataRegs.GPATOGGLE.bit.GPIO31 = 1;  // Blink Blue LED while calibrating
+        }
+        GpioDataRegs.GPBTOGGLE.bit.GPIO34 = 1;  // Always Block Red LED
+
+        UARTPrint = 1;  // Tell While loop to print
+    }
+
+    SpibRegs.SPIFFRX.bit.RXFFOVFCLR=1;  // Clear Overflow flag
+    SpibRegs.SPIFFRX.bit.RXFFINTCLR=1;  // Clear Interrupt flag
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP6;
+
+    SpibRegs.SPIFFRX.bit.RXFFOVFCLR = 1; // Clear Overflow flag just in case of an overflow
+    SpibRegs.SPIFFRX.bit.RXFFINTCLR = 1; // Clear RX FIFO Interrupt flag so next interrupt will happen
+
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP6; // Acknowledge INT6 PIE interrupt
+
+}
+
+//// Cole
+//velLeft = 0.6*velLeft_1 + 100*LW - 100*LW_1;
+//velRight = 0.6*velRight_1 + 100*RW - 100*RW_1;
+//
+//gyrorate_dot = 0.6*gyrorate_dot_1 + 100*gyro_value - 100*gyro_value_1;
+//
+//ubal = -K1*tilt_value - K2*gyro_value - K3*(velLeft + velRight)/2.0 - K4*gyrorate_dot;
+//
+//AvgWheelVel = (velLeft + velRight)/2;
+//errorvel = DVel-AvgWheelVel;
+//intDiffVel = intDiffVel_1 + 0.004*(errorvel + errorvel_1)/2;
+//FwdBackOffset = errorvel * KpVel + KiVel * intDiffVel;
+//
+//WhlDiff = LW - RW;
+//vel_WhlDiff = (166.667 * WhlDiff) - (166.667 * WhlDiff_1) + (0.333 * vel_WhlDiff_1);
+//
+//errorDiff = turnref - WhlDiff;
+//
+//intDiff = intDiff_1 + 0.004*(errorDiff + errorDiff_1)*0.5;
+//
+//turnref = turnref_1 + 0.004*(turnrate + turnrate_1)*0.5;
+//
+//turnC = KpC*errorDiff+KiC*intDiff - KdC*vel_WhlDiff;
+//
+//if(fabs(FwdBackOffset) > 3){
+//    FwdBackOffset = FwdBackOffset_1;
+//}
+//else{
+//    FwdBackOffset_1 = FwdBackOffset;
+//}
+//
+//if(FwdBackOffset > 4){
+//    FwdBackOffset = 4;
+//}
+//if(FwdBackOffset < -4){
+//    FwdBackOffset = -4;
+//}
+//
+//if(fabs(turnC) > 3){
+//    intDiff = intDiff_1;
+//} else{
+//    intDiff_1 = intDiff;
+//}
+////Saturate so it doesn't overpower balance
+//if(turnC > 4){
+//    turnC = 4;
+//}
+//if(turnC < -4){
+//    turnC = -4;
+//}
+//uKL = ubal/2 + turnC - FwdBackOffset;
+//uKR = ubal/2 - turnC - FwdBackOffset;
+//uKL = ubal/2;
+//uKR = ubal/2;
+////Saving past states
+//velLeft_1 = velLeft;
+//velRight_1 = velRight;
+//LW_1 = LW;
+//RW_1 = RW;
+//gyrorate_dot_1 = gyrorate_dot;
+//gyro_value_1 = gyro_value;
+//errorDiff_1 = errorDiff;
+//vel_WhlDiff_1 = vel_WhlDiff;
+//AvgWheelVel_1 = AvgWheelVel;
+//
+//intDiff_1 = intDiff;
+//turnref_1 = turnref;
+//turnrate_1 = turnrate;
+//
+//intDiffVel_1 = intDiffVel;
+//errorvel_1 = errorvel;
+//// Cole End
