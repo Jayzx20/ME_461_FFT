@@ -197,9 +197,9 @@ float ykb4 = 0;
 float XKa2[22]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 float XKa3[22]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 float b[22]={-2.3890045153263611e-03, -3.3150057635348224e-03, -4.6136191242627002e-03, -4.1659855521681268e-03, 1.4477422497795286e-03, 1.5489414225159667e-02,
- 3.9247886844071371e-02, 7.0723964095458614e-02, 1.0453473887246176e-01, 1.3325672639406205e-01, 1.4978314227429904e-01, 1.4978314227429904e-01, 1.3325672639406205e-01,
- 1.0453473887246176e-01, 7.0723964095458614e-02, 3.9247886844071371e-02, 1.5489414225159667e-02, 1.4477422497795286e-03, -4.1659855521681268e-03, -4.6136191242627002e-03,
- -3.3150057635348224e-03, -2.3890045153263611e-03};
+             3.9247886844071371e-02, 7.0723964095458614e-02, 1.0453473887246176e-01, 1.3325672639406205e-01, 1.4978314227429904e-01, 1.4978314227429904e-01, 1.3325672639406205e-01,
+             1.0453473887246176e-01, 7.0723964095458614e-02, 3.9247886844071371e-02, 1.5489414225159667e-02, 1.4477422497795286e-03, -4.1659855521681268e-03, -4.6136191242627002e-03,
+             -3.3150057635348224e-03, -2.3890045153263611e-03};
 
 uint16_t add = 0;
 
@@ -318,6 +318,8 @@ float time60;
 float time70;
 float time80;
 float time90;
+float time110;
+float time120;
 // state machine end
 
 // Robot car mode
@@ -328,7 +330,7 @@ float FwdCount = 0;
 float TurnCount = 0;
 float backRight = 0;
 float backLeft = 0;
-
+float stop = 0;
 //Segbot mode
 float SegbotCircle = 0;
 float segbot = 0;
@@ -1066,7 +1068,7 @@ __interrupt void SWI_isr(void) {
 
     case 10:
         time10++;
-        if(time10 > 500 && maxpwr > 75){
+        if(time10 > 500 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 4500 && maxpwrindex*10000.0/1024.0 < 5000){ // Wheelie 10-->20-->30
                 soundstate = 20;
                 time20 = 0;
@@ -1083,6 +1085,10 @@ __interrupt void SWI_isr(void) {
                 soundstate = 80;
                 time80 = 0;
             }
+            else if (maxpwrindex*10000.0/1024.0 > 1000 && maxpwrindex*10000.0/1024.0 < 1500){ // Robot Stop 10-->110-->120
+                soundstate = 110;
+                time110 = 0;
+            }
 
         }
         break;
@@ -1090,133 +1096,173 @@ __interrupt void SWI_isr(void) {
         // Wheelie 10-->20-->30
     case 20:
         time20++;
-        if(time20 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 4500 && maxpwrindex*10000.0/1024.0 < 5000){
+        if(time20 > 495 && time20 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 4000 && maxpwrindex*10000.0/1024.0 < 4500){
                 soundstate = 30;
                 time30 = 0;
             }
-            else{
-                soundstate = 10;
-                time10 = 0;
-            }
+        }
+        else if (time30 > 550){
+            soundstate = 10;
+            time10 = 0;
         }
         break;
+
     case 30:
         time30++;
-        if(time30 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 4500 && maxpwrindex*10000.0/1024.0 < 5000){
+        if(time30 > 495 && time30 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 2500 && maxpwrindex*10000.0/1024.0 < 3500){
                 segbot = 1;
                 wheelie = 1;
                 SegbotCircle = 0;
                 circle = 0;
+                stop = 0;
                 soundstate = 10;
                 time10 = 0;
                 time30 = 0;
             }
-            else{
-                soundstate = 10;
-                time10 = 0;
-            }
+//            else{
+//                soundstate = 10;
+//                time10 = 0;
+//            }
+        } else if (time30 > 550) {
+            soundstate = 10;
+            time10 = 0;
         }
         break;
 
         // Segbot Circle 10-->40-->50
     case 40:
         time40++;
-        if(time40 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 3500 && maxpwrindex*10000.0/1024.0 < 4000){
+        if(time40 > 495 && time40 <550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 3000 && maxpwrindex*10000.0/1024.0 < 3500){
                 soundstate = 50;
                 time50 = 0;
             }
-            else{
-                soundstate = 10;
-                time10 = 0;
-            }
+        }
+        else if (time40 > 550){
+            soundstate = 10;
+            time10 = 0;
         }
         break;
+
     case 50:
         time50++;
-        if(time50 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 3500 && maxpwrindex*10000.0/1024.0 < 4000){
+        if(time50 > 495 && time50 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 750 && maxpwrindex*10000.0/1024.0 < 1500){
                 SegbotCircle = 1;
                 soundstate = 10;
                 time10 = 0;
+                stop = 0;
             }
-            else{
-                soundstate = 10;
-                time10 = 0;
-            }
+        }
+        else if (time50 > 550){
+            soundstate = 10;
+            time10 = 0;
         }
         break;
 
         // Robot Circle 10-->60-->70
     case 60:
         time60++;
-        if(time60 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 2500 && maxpwrindex*10000.0/1024.0 < 3000){
+        if(time60 > 495 && time60 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 2000 && maxpwrindex*10000.0/1024.0 < 2500){
                 soundstate = 70;
                 time70 = 0;
             }
-            else{
+        }
+        else if (time60 > 550){
+            soundstate = 10;
+            time10 = 0;
+        }
+        break;
+    case 70:
+        time70++;
+        if(time70 > 495 && time70 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 3500 && maxpwrindex*10000.0/1024.0 < 4500){
+                segbot = 0;
+                circle = 1;
+                square = 0;
+                SegbotCircle = 0;
+                wheelie = 0;
+                stop = 0;
                 soundstate = 10;
                 time10 = 0;
             }
         }
-        break;
-
-    case 70:
-        time70++;
-        if(time70 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 2500 && maxpwrindex*10000.0/1024.0 < 3000){
-                segbot = 0;
-                circle = 1;
-                SegbotCircle = 0;
-                wheelie = 0;
-                soundstate = 10;
-                time10 = 0;
-            }
-            else{
-                soundstate = 10;
-                time10 = 0;
-            }
+        else if (time70 > 550){
+            soundstate = 10;
+            time10 = 0;
         }
         break;
 
         // Robot square 10-->80-->90
     case 80:
         time80++;
-        if(time80 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 1500 && maxpwrindex*10000.0/1024.0 < 2000){
+        if(time80 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 950 && maxpwrindex*10000.0/1024.0 < 1500){
                 soundstate = 90;
                 time90 = 0;
             }
-            else{
-                soundstate = 10;
-                time10 = 0;
-            }
+        }
+        else if (time80 > 550){
+            soundstate = 10;
+            time10 = 0;
         }
         break;
     case 90:
         time90++;
-        if(time90 > 500 && maxpwr > 75){
-            if(maxpwrindex*10000.0/1024.0 > 1000 && maxpwrindex*10000.0/1024.0 < 2000){
+        if(time90 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 2700 && maxpwrindex*10000.0/1024.0 < 4000){
                 segbot = 0;
                 circle = 0;
                 square = 1;
+                RSN = 0;
+                stop = 0;
                 SegbotCircle = 0;
                 wheelie = 0;
                 soundstate = 10;
                 time10 = 0;
             }
-            else{
+        }
+        else if (time90 > 550){
+            soundstate = 10;
+            time10 = 0;
+        }
+        break;
+    case 110:
+        time110++;
+        if(time110 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 1000 && maxpwrindex*10000.0/1024.0 < 1500){
+                soundstate = 120;
+                time120 = 0;
+            }
+        }
+        else if (time110 > 550){
+            soundstate = 10;
+            time10 = 0;
+        }
+        break;
+    case 120:
+        time120++;
+        if(time120 < 550 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 1000 && maxpwrindex*10000.0/1024.0 < 1500){
+                stop = 1;
+                segbot = 0;
+                circle = 0;
+                square = 0;
+                SegbotCircle = 0;
+                wheelie = 0;
                 soundstate = 10;
                 time10 = 0;
             }
         }
+        else if (time120 > 550){
+            soundstate = 10;
+            time10 = 0;
+        }
         break;
-
     }
-
     // Zehan Servo
     if ((GpioDataRegs.GPADAT.bit.GPIO5)== 1) {
         setEPWM8A_RCServo(IR_angle);
@@ -1232,36 +1278,33 @@ __interrupt void SWI_isr(void) {
         RW = readEncRight(); // in radiant
         if (GpioDataRegs.GPADAT.bit.GPIO4 == 1 && GpioDataRegs.GPADAT.bit.GPIO6 == 1 && backRight == 0 && backLeft == 0){
             if (circle == 1){
-                Vref6 = 0.5;
-                turn6 = 0.5;
+                Vref6 = 0.5;//1
+                turn6 = 0.5;//1
             }
             else if (square == 1)
             {
-                RSN = 0;
                 switch(RSN){
 
                 // For PSM() Case 3
 
                 case 0: // Forward
-                    turn = 0;
-                    Vref = 0;
+                    turn6 = 0;
+                    Vref6 = 0;
                     FwdCount = 0;
                     RSN = 2;
                     break;
 
                 case 1: // Turn Left
-                    turn = 0;
-                    Vref = 0;
+                    turn6 = 0;
+                    Vref6 = 0;
                     TurnCount = 0;
                     RSN = 3;
                     break;
 
-                case 2: // Forward Counter
+                case 2: // Forward
                     FwdCount++;
-                    // Fwd command
-                    Vref = 0.15;
-                    // Fwd command end
-                    if (FwdCount > 3000){ // Change to turn command after move about 3s
+                    Vref6 = .5;//1.25
+                    if (FwdCount > 750){ // Change to turn command after move about 3s
                         RSN = 1;
                     }
                     else{ // Stay in Fwd command
@@ -1269,12 +1312,10 @@ __interrupt void SWI_isr(void) {
                     }
                     break;
 
-                case 3: //Left Turn Counter
+                case 3: //Left Turn
                     TurnCount++;
-                    // Left Turn Command
-                    turn = 0.5;
-                    // Left Turn Command end
-                    if (TurnCount > 500){ // Change to Fwd command after turn about 0.5s
+                    turn6 = 0.571;//1.571
+                    if (TurnCount > 165){ // Change to Fwd command after turn about 0.5s
                         RSN = 0;
                     }
                     else{ // Stay in turn command
@@ -1283,7 +1324,7 @@ __interrupt void SWI_isr(void) {
                     break;
                 }
             }
-            else {
+            else if(stop == 1) {
                 Vref6 = 0;
                 turn6 = 0;
             }
@@ -1292,8 +1333,8 @@ __interrupt void SWI_isr(void) {
         else{
             if((GpioDataRegs.GPADAT.bit.GPIO4) == 0 || backRight > 0){ //Right
                 backRight++;
-                Vref6 = -1;
-                turn6 = -0.5;
+                Vref6 = -0.75;
+                turn6 = 1;
                 if (backRight >= 250){
                     backRight = 0;
                 }
@@ -1301,8 +1342,8 @@ __interrupt void SWI_isr(void) {
             }
             if ((GpioDataRegs.GPADAT.bit.GPIO6) == 0 || backLeft > 0){ //Left
                 backLeft++;
-                Vref6 = -1;
-                turn6 = 0.5;
+                Vref6 = -0.75;
+                turn6 = -1;
                 if (backLeft >= 250){
                     backLeft = 0;
                 }
@@ -1704,16 +1745,7 @@ __interrupt void cpu_timer1_isr(void)
 // cpu_timer2_isr CPU Timer2 ISR
 __interrupt void cpu_timer2_isr(void)
 {
-
-
-    // Blink LaunchPad Blue LED
-    //   GpioDataRegs.GPATOGGLE.bit.GPIO31 = 1;
-
     CpuTimer2.InterruptCount++;
-
-    //    if ((CpuTimer2.InterruptCount % 50) == 0) {
-    //        UARTPrint = 1;
-    //    }
 }
 
 
