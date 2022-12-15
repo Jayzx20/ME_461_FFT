@@ -209,7 +209,7 @@ float accelz_offset = 0;
 float gyrox_offset = 0;
 float gyroy_offset = 0;
 float gyroz_offset = 0;
-float accelzBalancePoint = 0.615;
+float accelzBalancePoint = 0.615; // Adjust every time for new battery
 int16 IMU_data[9];
 uint16_t temp=0;
 int16_t doneCal = 0;
@@ -1082,7 +1082,7 @@ __interrupt void SWI_isr(void) {
                 soundstate = 60;
                 time60 = 0;
             }
-            else if (maxpwrindex*10000.0/1024.0 > 1500 && maxpwrindex*10000.0/1024.0 < 2000){ // Robot square 10-->80-->90
+            else if (maxpwrindex*10000.0/1024.0 > 1500 && maxpwrindex*10000.0/1024.0 < 2500){ // Robot square 10-->80-->90
                 soundstate = 80;
                 time80 = 0;
             }
@@ -1201,7 +1201,7 @@ __interrupt void SWI_isr(void) {
     case 80:
         time80++;
         if(time80 < 650 && maxpwr > 50){
-            if(maxpwrindex*10000.0/1024.0 > 950 && maxpwrindex*10000.0/1024.0 < 1500){
+            if(maxpwrindex*10000.0/1024.0 > 2250 && maxpwrindex*10000.0/1024.0 < 3250){
                 soundstate = 90;
                 time90 = 0;
             }
@@ -1214,7 +1214,7 @@ __interrupt void SWI_isr(void) {
     case 90:
         time90++;
         if(time90 < 650 && maxpwr > 50){
-            if(maxpwrindex*10000.0/1024.0 > 2700 && maxpwrindex*10000.0/1024.0 < 4000){
+            if(maxpwrindex*10000.0/1024.0 > 3500 && maxpwrindex*10000.0/1024.0 < 4500){
                 segbot = 0;
                 circle = 0;
                 square = 1;
@@ -1226,11 +1226,12 @@ __interrupt void SWI_isr(void) {
                 time10 = 0;
             }
         }
-        else if (time90 > 655){
+        else if (time90 > 650){
             soundstate = 10;
             time10 = 0;
         }
         break;
+
     case 110:
         time110++;
         if(time110 < 650 && maxpwr > 50){
@@ -1493,7 +1494,7 @@ __interrupt void SWI_isr(void) {
         }
 
         if(SegbotCircle == 1){
-            turnrate = 0.75;
+            turnrate = 1;
             // DVel = 0.2;
         }
 
@@ -1525,16 +1526,7 @@ __interrupt void SWI_isr(void) {
 
 __interrupt void SPIB_isr(void){
     add++;
-    //spivalue1 = SpibRegs.SPIRXBUF; // Read first 16 bit value off RX FIFO. Probably is zero since no chip
-    //spivalue2 = SpibRegs.SPIRXBUF; // Read second 16 bit value off RX FIFO. Again probably zero
-    //    SpibRegs.SPIRXBUF;
-    //    ADC_READ_1 = SpibRegs.SPIRXBUF*3.3/4095.0;
-    //    ADC_READ_2 = SpibRegs.SPIRXBUF*3.3/4095.0;
-    //    GpioDataRegs.GPASET.bit.GPIO9 = 1; // Set GPIO9 high to end Slave Select. Now Scope. Later to deselect DAN28027
-    //    // Later when actually communicating with the DAN28027 do something with the data. Now do nothing.
-    //    SpibRegs.SPIFFRX.bit.RXFFOVFCLR = 1; // Clear Overflow flag just in case of an overflow
-    //    SpibRegs.SPIFFRX.bit.RXFFINTCLR = 1; // Clear RX FIFO Interrupt flag so next interrupt will happen
-    //    PieCtrlRegs.PIEACK.all = PIEACK_GROUP6; // Acknowledge INT6 PIE interrupt
+
     GpioDataRegs.GPCSET.bit.GPIO66 = 1;
     dummy = SpibRegs.SPIRXBUF;
     ACCEL_X_RAW = SpibRegs.SPIRXBUF; // ACCEL_X
@@ -1615,24 +1607,13 @@ __interrupt void SPIB_isr(void){
             PieCtrlRegs.PIEIFR12.bit.INTx9 = 1; // Manually cause the interrupt for the SWI
         }
     }
-    //    timecount++;
-    //    if((timecount%200) == 0)
-    //    {
-    //        if(doneCal == 0) {
-    //            GpioDataRegs.GPATOGGLE.bit.GPIO31 = 1; // Blink Blue LED while calibrating
-    //        }
-    //        GpioDataRegs.GPBTOGGLE.bit.GPIO34 = 1; // Always Block Red LED
-    //        UARTPrint = 1; // Tell While loop to print
-    //    }
+
     SpibRegs.SPIFFRX.bit.RXFFOVFCLR=1; // Clear Overflow flag
     SpibRegs.SPIFFRX.bit.RXFFINTCLR=1; // Clear Interrupt flag
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP6;
 
     gAngleLeft = readEncLeft();
     gAngleRight = readEncRight();
-
-    //    setEPWM2A(uRight); //2A is the right wheel
-    //    setEPWM2B(-uLeft); //2B is the left wheel
 
     if ((add % 200) == 0) {
         if(doneCal == 0) {
@@ -1648,66 +1629,7 @@ __interrupt void SPIB_isr(void){
 __interrupt void cpu_timer0_isr(void)
 {
     CpuTimer0.InterruptCount++;
-
-    //Clear GPIO9 Low to act as a Slave Select. Right now, just to scope. Later to select DAN28027 chip
-    //    GpioDataRegs.GPACLEAR.bit.GPIO9 = 1; //Clear GPIO9 Low
-    //    SpibRegs.SPIFFRX.bit.RXFFIL = 3; // Issue the SPIB_RX_INT when two values are in the RX FIFO
-    //    SpibRegs.SPITXBUF = 0x00DA; // 0x4A3B and 0xB517 have no special meaning. Wanted to send
-    //    SpibRegs.SPITXBUF = PWM1; // something so you can see the pattern on the Oscilloscope
-    //    SpibRegs.SPITXBUF = PWM2;
-    //
-    //    if(updown == 1){          //Increment PWM signal
-    //        PWM1 = PWM1 + 10;
-    //        if(PWM1 == 3000){
-    //            updown = 0;
-    //        }
-    //    }
-    //    if(updown == 0){
-    //        PWM1 = PWM1 - 10;
-    //        if(PWM1 == 0){
-    //            updown = 1;
-    //        }
-    //    }
-    //    if(updown_2 == 1){
-    //        PWM2 = PWM2 + 10;
-    //        if(PWM2 == 3000){
-    //            updown_2 = 0;
-    //        }
-    //    }
-    //    if(updown_2 == 0){
-    //        PWM2 = PWM2 - 10;
-    //        if(PWM2 == 0){
-    //            updown_2 = 1;
-    //        }
-    //    }
-
-
-
-
     numTimer0calls++;
-
-    //    if ((numTimer0calls%50) == 0) {
-    //        PieCtrlRegs.PIEIFR12.bit.INTx9 = 1;  // Manually cause the interrupt for the SWI
-    //    }
-
-    //    if ((numTimer0calls%250) == 0) {
-    //        displayLEDletter(LEDdisplaynum);
-    //        LEDdisplaynum++;
-    //        if (LEDdisplaynum == 0xFFFF) {  // prevent roll over exception
-    //            LEDdisplaynum = 0;
-    //        }
-    //    }
-
-
-
-    //    if ((CpuTimer0.InterruptCount % 200) == 0) {
-    //        UARTPrint = 1;
-    //    }
-
-    // Blink LaunchPad Red LED
-    //  GpioDataRegs.GPBTOGGLE.bit.GPIO34 = 1;
-
-    // Acknowledge this interrupt to receive more interrupts from group 1
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
 
@@ -1717,27 +1639,15 @@ __interrupt void cpu_timer1_isr(void)
 
 
     CpuTimer1.InterruptCount++;
-    //    gAngleLeft = readEncLeft();
-    //    gAngleRight = readEncRight();
 
     gDistanceLeft = gAngleLeft*(1/5.06);
     gDistanceRight = gAngleRight*(1/5.06);
 
-
     PosLeft_K = gDistanceLeft;
     VLeftK = (PosLeft_K - PosLeft_K_1)/0.004;
 
-
     PosRight_K = gDistanceRight;
     VRightK = (PosRight_K - PosRight_K_1)/0.004;
-
-    //    if( fabs(uLeft) <= 10){
-    //        EK_1_L = EK_L;
-    //        EK_L = V_ref_L - VLeftK;
-    //        IK_1_L = IK_L;
-    //        IK_L = IK_1_L + 0.004*(EK_L+EK_1_L)/2.0;
-    //        uLeft = KP_L*EK_L + Ki_L*IK_L;
-    //    }
 
     Eturn = turn + (VLeftK - VRightK);
 
@@ -1755,9 +1665,6 @@ __interrupt void cpu_timer1_isr(void)
     if(fabs(uLeft)>10){
         IK_L = IK_1_L;
     }
-
-    //    setEPWM2A(uRight); //2A is the right wheel
-    //    setEPWM2B(-uLeft); //2B is the left wheel
 
     PosRight_K_1 = PosRight_K;
     PosLeft_K_1 = PosLeft_K;
