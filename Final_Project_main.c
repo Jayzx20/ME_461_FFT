@@ -147,8 +147,8 @@ float gAngleRight;
 float gDistanceLeft;
 float gDistanceRight;
 
-float uLeft = 5.0;
-float uRight = 5.0;
+float uLeft = 0;
+float uRight = 0;
 
 float PosLeft_K_1 = 0.0;
 float PosLeft_K = 0.0;
@@ -209,7 +209,7 @@ float accelz_offset = 0;
 float gyrox_offset = 0;
 float gyroy_offset = 0;
 float gyroz_offset = 0;
-float accelzBalancePoint = +.635;
+float accelzBalancePoint = 0.615;
 int16 IMU_data[9];
 uint16_t temp=0;
 int16_t doneCal = 0;
@@ -331,15 +331,16 @@ float TurnCount = 0;
 float backRight = 0;
 float backLeft = 0;
 float stop = 0;
+float wallfollowing = 0;
 //Segbot mode
 float SegbotCircle = 0;
 float segbot = 0;
 int16_t wheelie = 1;
 int16_t WheelieTime = 0;
-int16_t accel_time = 1250;
-int16_t stop_time = 1375;
-int16_t balance_time = 1500;
-int16_t end_time = 1502;
+int16_t accel_time = 1001;
+int16_t stop_time = 1002;
+int16_t balance_time = 1003;
+int16_t end_time = 1004;
 float uLeftMax = 8.5;
 float uRightMax = 8.5;
 float uLeftStop = 0;
@@ -1085,7 +1086,7 @@ __interrupt void SWI_isr(void) {
                 soundstate = 80;
                 time80 = 0;
             }
-            else if (maxpwrindex*10000.0/1024.0 > 1000 && maxpwrindex*10000.0/1024.0 < 1500){ // Robot Stop 10-->110-->120
+            else if (maxpwrindex*10000.0/1024.0 > 3000 && maxpwrindex*10000.0/1024.0 < 3500){ // Robot Stop 10-->110-->120
                 soundstate = 110;
                 time110 = 0;
             }
@@ -1096,13 +1097,13 @@ __interrupt void SWI_isr(void) {
         // Wheelie 10-->20-->30
     case 20:
         time20++;
-        if(time20 > 495 && time20 < 550 && maxpwr > 50){
-            if(maxpwrindex*10000.0/1024.0 > 4000 && maxpwrindex*10000.0/1024.0 < 4500){
+        if(time20 < 650 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 3000 && maxpwrindex*10000.0/1024.0 < 4500){
                 soundstate = 30;
                 time30 = 0;
             }
         }
-        else if (time30 > 550){
+        else if (time20 > 655){
             soundstate = 10;
             time10 = 0;
         }
@@ -1110,7 +1111,7 @@ __interrupt void SWI_isr(void) {
 
     case 30:
         time30++;
-        if(time30 > 495 && time30 < 550 && maxpwr > 50){
+        if(time30 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 2500 && maxpwrindex*10000.0/1024.0 < 3500){
                 segbot = 1;
                 wheelie = 1;
@@ -1121,11 +1122,8 @@ __interrupt void SWI_isr(void) {
                 time10 = 0;
                 time30 = 0;
             }
-//            else{
-//                soundstate = 10;
-//                time10 = 0;
-//            }
-        } else if (time30 > 550) {
+        }
+        else if (time30 > 655) {
             soundstate = 10;
             time10 = 0;
         }
@@ -1134,13 +1132,13 @@ __interrupt void SWI_isr(void) {
         // Segbot Circle 10-->40-->50
     case 40:
         time40++;
-        if(time40 > 495 && time40 <550 && maxpwr > 50){
+        if(time40 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 3000 && maxpwrindex*10000.0/1024.0 < 3500){
                 soundstate = 50;
                 time50 = 0;
             }
         }
-        else if (time40 > 550){
+        else if (time40 > 655){
             soundstate = 10;
             time10 = 0;
         }
@@ -1148,15 +1146,18 @@ __interrupt void SWI_isr(void) {
 
     case 50:
         time50++;
-        if(time50 > 495 && time50 < 550 && maxpwr > 50){
-            if(maxpwrindex*10000.0/1024.0 > 750 && maxpwrindex*10000.0/1024.0 < 1500){
+        if(time50 < 650 && maxpwr > 50){
+            if(maxpwrindex*10000.0/1024.0 > 750 && maxpwrindex*10000.0/1024.0 < 1750){
                 SegbotCircle = 1;
+                segbot = 1;
                 soundstate = 10;
+                circle = 0;
+                stop = 0;
                 time10 = 0;
                 stop = 0;
             }
         }
-        else if (time50 > 550){
+        else if (time50 > 655){
             soundstate = 10;
             time10 = 0;
         }
@@ -1165,20 +1166,20 @@ __interrupt void SWI_isr(void) {
         // Robot Circle 10-->60-->70
     case 60:
         time60++;
-        if(time60 > 495 && time60 < 550 && maxpwr > 50){
+        if(time60 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 2000 && maxpwrindex*10000.0/1024.0 < 2500){
                 soundstate = 70;
                 time70 = 0;
             }
         }
-        else if (time60 > 550){
+        else if (time60 > 655){
             soundstate = 10;
             time10 = 0;
         }
         break;
     case 70:
         time70++;
-        if(time70 > 495 && time70 < 550 && maxpwr > 50){
+        if(time70 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 3500 && maxpwrindex*10000.0/1024.0 < 4500){
                 segbot = 0;
                 circle = 1;
@@ -1190,7 +1191,7 @@ __interrupt void SWI_isr(void) {
                 time10 = 0;
             }
         }
-        else if (time70 > 550){
+        else if (time70 > 655){
             soundstate = 10;
             time10 = 0;
         }
@@ -1199,20 +1200,20 @@ __interrupt void SWI_isr(void) {
         // Robot square 10-->80-->90
     case 80:
         time80++;
-        if(time80 < 550 && maxpwr > 50){
+        if(time80 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 950 && maxpwrindex*10000.0/1024.0 < 1500){
                 soundstate = 90;
                 time90 = 0;
             }
         }
-        else if (time80 > 550){
+        else if (time80 > 655){
             soundstate = 10;
             time10 = 0;
         }
         break;
     case 90:
         time90++;
-        if(time90 < 550 && maxpwr > 50){
+        if(time90 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 2700 && maxpwrindex*10000.0/1024.0 < 4000){
                 segbot = 0;
                 circle = 0;
@@ -1225,27 +1226,27 @@ __interrupt void SWI_isr(void) {
                 time10 = 0;
             }
         }
-        else if (time90 > 550){
+        else if (time90 > 655){
             soundstate = 10;
             time10 = 0;
         }
         break;
     case 110:
         time110++;
-        if(time110 < 550 && maxpwr > 50){
+        if(time110 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 1000 && maxpwrindex*10000.0/1024.0 < 1500){
                 soundstate = 120;
                 time120 = 0;
             }
         }
-        else if (time110 > 550){
+        else if (time110 > 655){
             soundstate = 10;
             time10 = 0;
         }
         break;
     case 120:
         time120++;
-        if(time120 < 550 && maxpwr > 50){
+        if(time120 < 650 && maxpwr > 50){
             if(maxpwrindex*10000.0/1024.0 > 1000 && maxpwrindex*10000.0/1024.0 < 1500){
                 stop = 1;
                 segbot = 0;
@@ -1257,7 +1258,7 @@ __interrupt void SWI_isr(void) {
                 time10 = 0;
             }
         }
-        else if (time120 > 550){
+        else if (time120 > 655){
             soundstate = 10;
             time10 = 0;
         }
@@ -1278,8 +1279,8 @@ __interrupt void SWI_isr(void) {
         RW = readEncRight(); // in radiant
         if (GpioDataRegs.GPADAT.bit.GPIO4 == 1 && GpioDataRegs.GPADAT.bit.GPIO6 == 1 && backRight == 0 && backLeft == 0){
             if (circle == 1){
-                Vref6 = 0.5;//1
-                turn6 = 0.5;//1
+                Vref6 = 1;//1
+                turn6 = 1;//1
             }
             else if (square == 1)
             {
@@ -1303,7 +1304,7 @@ __interrupt void SWI_isr(void) {
 
                 case 2: // Forward
                     FwdCount++;
-                    Vref6 = .5;//1.25
+                    Vref6 = 1.25;//1.25
                     if (FwdCount > 750){ // Change to turn command after move about 3s
                         RSN = 1;
                     }
@@ -1314,7 +1315,7 @@ __interrupt void SWI_isr(void) {
 
                 case 3: //Left Turn
                     TurnCount++;
-                    turn6 = 0.571;//1.571
+                    turn6 = 1.571;//1.571
                     if (TurnCount > 165){ // Change to Fwd command after turn about 0.5s
                         RSN = 0;
                     }
@@ -1327,8 +1328,32 @@ __interrupt void SWI_isr(void) {
             else if(stop == 1) {
                 Vref6 = 0;
                 turn6 = 0;
+                turnrate = 0;
+                uLeft = 0;
+                uRight = 0;
             }
-
+            else if(wallfollowing == 1){
+                // Right Wall Following
+                if(voltsADCINA_Front > 1.9 && voltsADCINA_Right < 0.9 && voltsADCINA_Left > 1.8){// Forward Only
+                    Vref6 = 0.8;
+                }
+                else if(voltsADCINA_Front > 1.9 && voltsADCINA_Right >= 0.9 && voltsADCINA_Right <= 1.9 && voltsADCINA_Left > 1.8){
+                    Vref6 = 0.8;
+                    turn6 = -0.25; // Turn Right
+                }
+                else if(voltsADCINA_Front > 1.9 && voltsADCINA_Right > 1.9 && voltsADCINA_Left > 1.8){
+                    Vref6 = 0.8;
+                    turn6 = -0.5; // Turn Right
+                }
+                else if (voltsADCINA_Front <= 1.9 && voltsADCINA_Right < 0.9 && voltsADCINA_Left > 1.8){
+                    Vref6 = 0.25;
+                    turn6 = 0.5; // Turn Left
+                }
+                else if (voltsADCINA_Front <= 1.9 && voltsADCINA_Right >= 0.9 && voltsADCINA_Left > 1.8){
+                    Vref6 = 0.25;
+                    turn6 = 0.25; // Turn Left
+                }
+            }
         }
         else{
             if((GpioDataRegs.GPADAT.bit.GPIO4) == 0 || backRight > 0){ //Right
@@ -1449,9 +1474,9 @@ __interrupt void SWI_isr(void) {
         WheelieTime++;
         if (wheelie == 1){
             if(WheelieTime <1000){
-                // Run
-            }
-            if(WheelieTime < accel_time && WheelieTime > 0){
+                uLeft = 0;
+                uRight = 0;
+            } else if(WheelieTime < accel_time && WheelieTime > 1000){
                 uLeft = uLeftMax;
                 uRight = uRightMax;
             } else if(WheelieTime < stop_time && WheelieTime > accel_time){
@@ -1463,11 +1488,12 @@ __interrupt void SWI_isr(void) {
             } else if (WheelieTime < end_time && WheelieTime > balance_time){
                 wheelie = 0;
                 WheelieTime = 0;
+                turnrate = 0;
             }
         }
 
         if(SegbotCircle == 1){
-            turnrate = 1;
+            turnrate = 0.75;
             // DVel = 0.2;
         }
 
